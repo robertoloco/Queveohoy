@@ -1,0 +1,16 @@
+{
+  "name": "que-veo-hoy",
+  "version": "1.0.0",
+  "description": "Aplicación de recomendaciones de películas y series",
+  "main": "index.html",
+  "scripts": {
+    "start": "python server.py",
+    "build": "echo 'No build step required'"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "python-shell": "^3.0.1"
+  }
+} 

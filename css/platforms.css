@@ -1,0 +1,57 @@
+.platform-logo {
+    width: 40px;
+    height: 40px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: block;
+    margin: 0 auto;
+}
+
+.logo-netflix {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg');
+}
+
+.logo-max {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg');
+}
+
+.logo-disney {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg');
+}
+
+.logo-prime {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png');
+}
+
+.logo-apple {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg');
+}
+
+.logo-filmin {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/d/dd/Logotipo_Filmin_2023.png');
+}
+
+.logo-movistar {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/1/1d/Movistar_Plus%2B_2022_logo.svg');
+}
+
+.logo-skyshowtime {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/8c/Sky_Showtime_Logo.png');
+}
+
+.logo-atresplayer {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/70/AtresPlayer_2023_Logo.png');
+}
+
+.logo-flixole {
+    background-image: url('https://www.flixole.com/assets/images/logo-flixole.svg');
+}
+
+.logo-rtve {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/4/4c/Logo_rtve_play.svg');
+}
+
+.logo-crunchyroll {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png');
+} 

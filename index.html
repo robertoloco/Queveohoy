@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Qué veo hoy?</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2U1MDkxNCIgZD0iTTIwIDJINGMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxNmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0tOSAxM1Y5bDUgM2wtNSAzeiIvPjwvc3ZnPg==">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/platforms.css">
+</head>
+<body>
+    <div class="container">
+        <h1>¿Qué veo hoy?</h1>
+
+        <div class="button-group">
+            <button id="btnPelicula" class="active" aria-pressed="true">Película</button>
+            <button id="btnSerie">Serie</button>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="genreSelect">Género:</label>
+                <select id="genreSelect" aria-label="Seleccionar género">
+                    <option value="">Todos los géneros</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="referenciaInput">Director o contenido que te gusta:</label>
+                <input type="text" id="referenciaInput" placeholder="Ej: Christopher Nolan, Stranger Things..." aria-label="Ingresar director o contenido de referencia">
+                <button id="buscarReferencia" class="action-button" aria-label="Buscar por referencia">
+                    Recomienda la IA
+                </button>
+            </div>
+        </div>
+
+        <label for="plataformas" class="sr-only">Plataformas que tienes:</label>
+        <div class="checkbox-group" id="plataformas" role="group" aria-labelledby="plataformas">
+            <label class="checkbox-icon">
+                <input type="checkbox" value="Netflix" aria-label="Netflix">
+                <div class="platform-logo logo-netflix"></div>
+                <span>Netflix</span>
+            </label>
+            <label class="checkbox-icon">
+                <input type="checkbox" value="Max" aria-label="Max">
+                <div class="platform-logo logo-max"></div>
+                <span>Max</span>
+            </label>
+            <label class="checkbox-icon">
+                <input type="checkbox" value="Disney Plus" aria-label="Disney Plus">
+                <div class="platform-logo logo-disney"></div>
+                <span>Disney+</span>
+            </label>
+            <label class="checkbox-icon">
+                <input type="checkbox" value="Amazon Prime Video" aria-label="Amazon Prime Video">
+                <div class="platform-logo logo-prime"></div>
+                <span>Prime</span>
+            </label>
+            <label class="checkbox-icon">
+                <input type="checkbox" value="Apple TV Plus" aria-label="Apple TV Plus">
+                <div class="platform-logo logo-apple"></div>
+                <span>Apple TV+</span>
+            </label>
+            <label class="checkbox-icon">
+                <input type="checkbox" value="Filmin" aria-label="Filmin">
+                <div class="platform-logo logo-filmin"></div>
+                <span>Filmin</span>
+            </label>
+            <label class="checkbox-icon">
+                <input type="checkbox" value="Movistar Plus" aria-label="Movistar Plus">
+                <div class="platform-logo logo-movistar"></div>
+                <span>Movistar+</span>
+            </label>
+            <label class="checkbox-icon">
+                <input type="checkbox" value="Crunchyroll" aria-label="Crunchyroll">
+                <div class="platform-logo logo-crunchyroll"></div>
+                <span>Crunchyroll</span>
+            </label>
+        </div>
+
+        <div class="loading-message" id="loadingMessage">
+            Buscando recomendación...
+        </div>
+
+        <div class="result" id="resultado"></div>
+
+        <button id="botonSorpresa" class="action-button" aria-label="Obtener recomendación aleatoria">
+            ¡Sorpréndeme!
+        </button>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html> 
