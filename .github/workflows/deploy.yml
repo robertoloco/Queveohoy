@@ -30,10 +30,10 @@ jobs:
         run: |
           cat > config.js << 'EOF'
           window.API_CONFIG = {
-            TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}',
-            GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}',
-            TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE }}',
-            TMDB_REGION: '${{ secrets.TMDB_REGION }}'
+            "TMDB_API_KEY": "${{ secrets.TMDB_API_KEY }}",
+            "GEMINI_API_KEY": "${{ secrets.GEMINI_API_KEY }}",
+            "TMDB_LANGUAGE": "${{ secrets.TMDB_LANGUAGE }}",
+            "TMDB_REGION": "${{ secrets.TMDB_REGION }}"
           };
           EOF
 

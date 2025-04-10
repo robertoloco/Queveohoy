@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Archivos de configuración local
+config.js
+
 # Dependencias
 node_modules/
 npm-debug.log*
