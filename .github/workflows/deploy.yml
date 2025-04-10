@@ -26,18 +26,24 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build
-        env:
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TMDB_LANGUAGE: ${{ secrets.TMDB_LANGUAGE }}
-          TMDB_REGION: ${{ secrets.TMDB_REGION }}
+      - name: Create config file
         run: |
-          # Crear archivo .env temporal para el build
-          echo "TMDB_API_KEY=$TMDB_API_KEY" > .env
-          echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env
-          echo "TMDB_LANGUAGE=$TMDB_LANGUAGE" >> .env
-          echo "TMDB_REGION=$TMDB_REGION" >> .env
+          cat > config.js << 'EOF'
+          window.API_CONFIG = {
+            TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}',
+            GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}',
+            TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE }}',
+            TMDB_REGION: '${{ secrets.TMDB_REGION }}'
+          };
+          EOF
+
+      - name: Build
+        run: |
+          # Copiar el archivo de configuración al directorio correcto
+          mkdir -p js
+          mv config.js js/config.js
+          # Añadir el script de configuración al HTML
+          sed -i '/<script type="module" src="js\/main.js"><\/script>/i <script src="js/config.js"></script>' index.html
 
   deploy:
     needs: build

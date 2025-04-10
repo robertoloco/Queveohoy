@@ -1,10 +1,10 @@
 // Configuración de la API
 export const API_CONFIG = {
     BASE_URL: 'https://api.themoviedb.org/3',
-    API_KEY: process.env.TMDB_API_KEY || '6f8a752ff9858fade9e122cbe6896b63', // Fallback temporal
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY || 'AIzaSyBH4mXio_L0JAyoJMbSHG5twq0KrbxS7v4', // Fallback temporal
-    LANGUAGE: process.env.TMDB_LANGUAGE || 'es-ES',
-    REGION: process.env.TMDB_REGION || 'ES',
+    API_KEY: window.API_CONFIG?.TMDB_API_KEY || '6f8a752ff9858fade9e122cbe6896b63', // Fallback temporal
+    GEMINI_API_KEY: window.API_CONFIG?.GEMINI_API_KEY || 'AIzaSyBH4mXio_L0JAyoJMbSHG5twq0KrbxS7v4', // Fallback temporal
+    LANGUAGE: window.API_CONFIG?.TMDB_LANGUAGE || 'es-ES',
+    REGION: window.API_CONFIG?.TMDB_REGION || 'ES',
     IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/w500',
     RATE_LIMIT: {
         MAX_REQUESTS: 40,
