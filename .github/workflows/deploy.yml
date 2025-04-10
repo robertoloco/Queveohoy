@@ -28,20 +28,15 @@ jobs:
 
       - name: Create config file
         run: |
-          cat > config.js << 'EOF'
-          window.API_CONFIG = {
-            "TMDB_API_KEY": "${{ secrets.TMDB_API_KEY }}",
-            "GEMINI_API_KEY": "${{ secrets.GEMINI_API_KEY }}",
-            "TMDB_LANGUAGE": "${{ secrets.TMDB_LANGUAGE }}",
-            "TMDB_REGION": "${{ secrets.TMDB_REGION }}"
-          };
-          EOF
+          echo 'window.API_CONFIG = {' > js/config.js
+          echo '  "TMDB_API_KEY": "'${{ secrets.TMDB_API_KEY }}'",' >> js/config.js
+          echo '  "GEMINI_API_KEY": "'${{ secrets.GEMINI_API_KEY }}'",' >> js/config.js
+          echo '  "TMDB_LANGUAGE": "'${{ secrets.TMDB_LANGUAGE }}'",' >> js/config.js
+          echo '  "TMDB_REGION": "'${{ secrets.TMDB_REGION }}'"' >> js/config.js
+          echo '};' >> js/config.js
 
       - name: Build
         run: |
-          # Copiar el archivo de configuración al directorio correcto
-          mkdir -p js
-          mv config.js js/config.js
           # Añadir el script de configuración al HTML
           sed -i '/<script type="module" src="js\/main.js"><\/script>/i <script src="js/config.js"></script>' index.html
 
