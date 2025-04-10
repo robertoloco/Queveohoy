@@ -26,25 +26,27 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Create directories
-        run: mkdir -p js
-
-      - name: Create config file
+      - name: Setup build directory
         run: |
-          echo "// Configuración generada durante el build" > js/config.js
-          echo "window.API_CONFIG = {" >> js/config.js
-          echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}'," >> js/config.js
-          echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'," >> js/config.js
-          echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> js/config.js
-          echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> js/config.js
-          echo "};" >> js/config.js
+          # Crear directorio de build
+          mkdir -p _site/js
+          # Copiar todos los archivos al directorio de build
+          cp -r * _site/ || true
+          # Crear archivo de configuración
+          echo "// Configuración generada durante el build" > _site/js/config.js
+          echo "window.API_CONFIG = {" >> _site/js/config.js
+          echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}'," >> _site/js/config.js
+          echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'," >> _site/js/config.js
+          echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> _site/js/config.js
+          echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> _site/js/config.js
+          echo "};" >> _site/js/config.js
 
       - name: Debug - List files
         run: |
-          echo "Contenido del directorio actual:"
-          ls -la
-          echo "Contenido del directorio js:"
-          ls -la js/
+          echo "Contenido del directorio _site:"
+          ls -la _site
+          echo "Contenido del directorio _site/js:"
+          ls -la _site/js
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -52,7 +54,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: '.'
+          path: '_site'
 
   deploy:
     needs: build
