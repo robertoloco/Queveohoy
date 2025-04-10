@@ -26,29 +26,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Create directories
+        run: mkdir -p js
+
       - name: Create config file
         run: |
-          echo 'window.API_CONFIG = {' > js/config.js
-          echo '  "TMDB_API_KEY": "'${{ secrets.TMDB_API_KEY }}'",' >> js/config.js
-          echo '  "GEMINI_API_KEY": "'${{ secrets.GEMINI_API_KEY }}'",' >> js/config.js
-          echo '  "TMDB_LANGUAGE": "'${{ secrets.TMDB_LANGUAGE }}'",' >> js/config.js
-          echo '  "TMDB_REGION": "'${{ secrets.TMDB_REGION }}'"' >> js/config.js
-          echo '};' >> js/config.js
+          echo "// Configuración generada durante el build" > js/config.js
+          echo "window.API_CONFIG = {" >> js/config.js
+          echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}'," >> js/config.js
+          echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'," >> js/config.js
+          echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> js/config.js
+          echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> js/config.js
+          echo "};" >> js/config.js
 
-      - name: Build
+      - name: Debug - List files
         run: |
-          # Añadir el script de configuración al HTML
-          sed -i '/<script type="module" src="js\/main.js"><\/script>/i <script src="js/config.js"></script>' index.html
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+          echo "Contenido del directorio actual:"
+          ls -la
+          echo "Contenido del directorio js:"
+          ls -la js/
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -58,6 +54,13 @@ jobs:
         with:
           path: '.'
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2 
