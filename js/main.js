@@ -95,13 +95,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const plataformasSeleccionadas = getPlataformasSeleccionadas();
             const generoSeleccionado = getGeneroSeleccionado();
             
+            if (plataformasSeleccionadas.length === 0) {
+                console.log('No hay plataformas seleccionadas, se usará una aleatoria');
+            }
+
+            console.log('Buscando contenido con:', {
+                tipo: tipoContenido,
+                plataformas: plataformasSeleccionadas,
+                genero: generoSeleccionado
+            });
+            
             const contenido = await getRandomContent(tipoContenido, plataformasSeleccionadas, generoSeleccionado);
             
             hideLoading();
             showResult(contenido, tipoContenido);
         } catch (error) {
+            console.error('Error completo:', error);
             hideLoading();
-            showError('No se pudo obtener una recomendación. Por favor, intenta de nuevo.');
+            showError('No se pudo obtener una recomendación. Por favor, selecciona al menos una plataforma e intenta de nuevo.');
         }
     };
 
@@ -143,14 +154,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const type = document.getElementById('btnPelicula').classList.contains('active') ? 'movie' : 'tv';
             const genre = document.getElementById('genreSelect').value;
 
-            console.log('Plataformas seleccionadas:', selectedPlatforms);
+            if (selectedPlatforms.length === 0) {
+                showError('Por favor, selecciona al menos una plataforma de streaming.');
+                hideLoading();
+                return;
+            }
+
+            console.log('Iniciando búsqueda con:', {
+                plataformas: selectedPlatforms,
+                tipo: type,
+                genero: genre
+            });
             
             const content = await getRandomContent(type, selectedPlatforms, genre);
             hideLoading();
             showResult(content, type);
         } catch (error) {
+            console.error('Error detallado:', error);
             hideLoading();
-            showError(error.message);
+            showError('No se encontró contenido para los criterios seleccionados. Por favor, intenta con diferentes plataformas o géneros.');
         }
     });
 
