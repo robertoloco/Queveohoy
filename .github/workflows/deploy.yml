@@ -39,15 +39,19 @@ jobs:
           # Crear directorio _site
           mkdir -p _site/js
           
-          # Crear config.js primero
-          echo "// Configuración generada durante el build" > _site/js/config.js
-          echo "const API_CONFIG = {" >> _site/js/config.js
-          echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}'," >> _site/js/config.js
-          echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'," >> _site/js/config.js
-          echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> _site/js/config.js
-          echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> _site/js/config.js
-          echo "};" >> _site/js/config.js
-          echo "window.API_CONFIG = API_CONFIG;" >> _site/js/config.js
+          # Crear config.js con las claves
+          cat > _site/js/config.js << EOL
+          // Configuración generada durante el build
+          export const API_CONFIG = {
+            TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}',
+            GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}',
+            TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}',
+            TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'
+          };
+
+          // Exponer configuración globalmente
+          window.API_CONFIG = API_CONFIG;
+          EOL
           
           # Copiar archivos estáticos
           cp -r css _site/
@@ -55,15 +59,12 @@ jobs:
           cp -r images _site/ 2>/dev/null || true
           cp index.html _site/
           
-          # Mostrar estructura final
-          echo "Estructura del directorio _site:"
-          ls -la _site/
+          # Verificar estructura y contenido
+          echo "Contenido de config.js (sin mostrar claves):"
+          cat _site/js/config.js | grep -v "API_KEY"
+          
           echo "Estructura del directorio _site/js:"
           ls -la _site/js/
-          
-          # Verificar contenido de config.js
-          echo "Contenido de config.js (sin mostrar claves):"
-          cat _site/js/config.js | sed 's/\(TMDB_API_KEY: \).*,/\1[HIDDEN],/' | sed 's/\(GEMINI_API_KEY: \).*,/\1[HIDDEN],/'
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
