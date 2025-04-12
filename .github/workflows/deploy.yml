@@ -29,24 +29,25 @@ jobs:
 
       - name: Create build directory
         run: |
-          # Crear directorio _site y js
-          mkdir -p _site/js
+          # Crear directorio _site
+          mkdir -p _site
           
-          # Crear config.js primero
+          # Copiar todos los archivos primero
+          cp -r css _site/
+          cp -r js _site/
+          cp -r images _site/ 2>/dev/null || true
+          cp index.html _site/
+          cp -r config _site/
+          
+          # Crear config.js en la raíz de _site/js
           echo "// Configuración generada durante el build" > _site/js/config.js
-          echo "window.API_CONFIG = {" >> _site/js/config.js
+          echo "const API_CONFIG = {" >> _site/js/config.js
           echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}'," >> _site/js/config.js
           echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'," >> _site/js/config.js
           echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> _site/js/config.js
           echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> _site/js/config.js
           echo "};" >> _site/js/config.js
-          
-          # Copiar el resto de archivos
-          cp -r css _site/
-          cp -r js/* _site/js/
-          cp -r images _site/ 2>/dev/null || true
-          cp index.html _site/
-          cp -r config _site/
+          echo "window.API_CONFIG = API_CONFIG;" >> _site/js/config.js
           
           # Verificar estructura
           echo "Estructura final:"
