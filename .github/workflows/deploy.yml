@@ -26,27 +26,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Setup build directory
+      - name: Debug - Check secrets
         run: |
-          # Crear directorio de build
-          mkdir -p _site/js
-          # Copiar todos los archivos al directorio de build
-          cp -r * _site/ || true
-          # Crear archivo de configuración
-          echo "// Configuración generada durante el build" > _site/js/config.js
-          echo "window.API_CONFIG = {" >> _site/js/config.js
-          echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}'," >> _site/js/config.js
-          echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'," >> _site/js/config.js
-          echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> _site/js/config.js
-          echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> _site/js/config.js
-          echo "};" >> _site/js/config.js
+          echo "Checking if secrets are set (not showing values):"
+          if [ -n "${{ secrets.TMDB_API_KEY }}" ]; then echo "TMDB_API_KEY is set"; else echo "TMDB_API_KEY is NOT set"; fi
+          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then echo "GEMINI_API_KEY is set"; else echo "GEMINI_API_KEY is NOT set"; fi
 
-      - name: Debug - List files
+      - name: Create config file
         run: |
-          echo "Contenido del directorio _site:"
-          ls -la _site
-          echo "Contenido del directorio _site/js:"
-          ls -la _site/js
+          mkdir -p js
+          echo "// Configuración generada durante el build" > js/config.js
+          echo "window.API_CONFIG = {" >> js/config.js
+          echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}' || ''," >> js/config.js
+          echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}' || ''," >> js/config.js
+          echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> js/config.js
+          echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> js/config.js
+          echo "};" >> js/config.js
+          
+          echo "Config file contents (without sensitive data):"
+          cat js/config.js | sed 's/\(TMDB_API_KEY: \).*,/\1[HIDDEN],/' | sed 's/\(GEMINI_API_KEY: \).*,/\1[HIDDEN],/'
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -54,7 +52,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: '_site'
+          path: '.'
 
   deploy:
     needs: build
