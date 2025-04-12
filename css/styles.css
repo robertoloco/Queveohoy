@@ -225,6 +225,7 @@ h1 {
 @media (max-width: 480px) {
     .container {
         padding: 0.5rem;
+        margin: 1rem auto;
     }
     
     .button-group {
@@ -237,6 +238,62 @@ h1 {
     
     .result-info h2 {
         font-size: 1.5rem;
+    }
+
+    .filters {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .filter-group {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .recommendation-item {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .recommendation-content {
+        flex-direction: column;
+    }
+
+    .recommendation-info {
+        padding: 1rem 0;
+    }
+
+    .justification {
+        font-size: 0.9rem;
+        line-height: 1.4;
+        margin: 0.5rem 0;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .platforms {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+
+    .platform-badges {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .platform-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+    }
+
+    #referenciaInput {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    #buscarReferencia {
+        width: 100%;
     }
 }
 
