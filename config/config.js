@@ -1,8 +1,22 @@
 // Configuración de la API
 export const API_CONFIG = {
     BASE_URL: 'https://api.themoviedb.org/3',
-    API_KEY: window.API_CONFIG?.TMDB_API_KEY || 'YOUR_TMDB_API_KEY',
-    GEMINI_API_KEY: window.API_CONFIG?.GEMINI_API_KEY || 'YOUR_GEMINI_API_KEY',
+    get API_KEY() {
+        const key = window.API_CONFIG?.TMDB_API_KEY;
+        if (!key) {
+            console.error('TMDB API Key no encontrada');
+            return 'YOUR_TMDB_API_KEY';
+        }
+        return key;
+    },
+    get GEMINI_API_KEY() {
+        const key = window.API_CONFIG?.GEMINI_API_KEY;
+        if (!key) {
+            console.error('Gemini API Key no encontrada');
+            return 'YOUR_GEMINI_API_KEY';
+        }
+        return key;
+    },
     LANGUAGE: window.API_CONFIG?.TMDB_LANGUAGE || 'es-ES',
     REGION: window.API_CONFIG?.TMDB_REGION || 'ES',
     IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/w500',
