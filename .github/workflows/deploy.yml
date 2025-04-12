@@ -27,6 +27,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Debug - List initial structure
+        run: |
+          echo "Initial directory structure:"
+          ls -R
+
+      - name: Create build directory
+        run: |
+          mkdir -p _site
+          cp -r css js images index.html _site/
+          cp -r config _site/
+
       - name: Debug - Check secrets
         run: |
           echo "Checking if secrets are set (not showing values):"
@@ -35,17 +46,19 @@ jobs:
 
       - name: Create config file
         run: |
-          mkdir -p js
-          echo "// Configuración generada durante el build" > js/config.js
-          echo "window.API_CONFIG = {" >> js/config.js
-          echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}' || ''," >> js/config.js
-          echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}' || ''," >> js/config.js
-          echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> js/config.js
-          echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> js/config.js
-          echo "};" >> js/config.js
-          
-          echo "Config file contents (without sensitive data):"
-          cat js/config.js | sed 's/\(TMDB_API_KEY: \).*,/\1[HIDDEN],/' | sed 's/\(GEMINI_API_KEY: \).*,/\1[HIDDEN],/'
+          mkdir -p _site/js
+          echo "// Configuración generada durante el build" > _site/js/config.js
+          echo "window.API_CONFIG = {" >> _site/js/config.js
+          echo "  TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}'," >> _site/js/config.js
+          echo "  GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'," >> _site/js/config.js
+          echo "  TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}'," >> _site/js/config.js
+          echo "  TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'" >> _site/js/config.js
+          echo "};" >> _site/js/config.js
+
+      - name: Debug - List final structure
+        run: |
+          echo "Final directory structure:"
+          ls -R _site/
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -53,7 +66,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: '.'
+          path: '_site'
 
   deploy:
     needs: build
