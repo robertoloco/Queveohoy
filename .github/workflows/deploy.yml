@@ -42,15 +42,43 @@ jobs:
           # Crear config.js con las claves
           cat > _site/js/config.js << EOL
           // Configuración generada durante el build
-          export const API_CONFIG = {
-            TMDB_API_KEY: '${{ secrets.TMDB_API_KEY }}',
+          const config = {
+            API_KEY: '${{ secrets.TMDB_API_KEY }}',
             GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}',
             TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}',
             TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}'
           };
 
+          // Getters para las claves
+          Object.defineProperties(config, {
+            'API_KEY': {
+              get() {
+                if (!this._API_KEY) {
+                  console.error('TMDB API Key no encontrada');
+                  return '';
+                }
+                return this._API_KEY;
+              },
+              set(value) { this._API_KEY = value; }
+            },
+            'GEMINI_API_KEY': {
+              get() {
+                if (!this._GEMINI_API_KEY) {
+                  console.error('Gemini API Key no encontrada');
+                  return '';
+                }
+                return this._GEMINI_API_KEY;
+              },
+              set(value) { this._GEMINI_API_KEY = value; }
+            }
+          });
+
+          // Inicializar valores
+          config.API_KEY = '${{ secrets.TMDB_API_KEY }}';
+          config.GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';
+
           // Exponer configuración globalmente
-          window.API_CONFIG = API_CONFIG;
+          window.API_CONFIG = config;
           EOL
           
           # Copiar archivos estáticos
@@ -60,9 +88,6 @@ jobs:
           cp index.html _site/
           
           # Verificar estructura y contenido
-          echo "Contenido de config.js (sin mostrar claves):"
-          cat _site/js/config.js | grep -v "API_KEY"
-          
           echo "Estructura del directorio _site/js:"
           ls -la _site/js/
 
