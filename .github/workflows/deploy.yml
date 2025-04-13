@@ -44,10 +44,16 @@ jobs:
       - name: Create config file
         run: |
           # Crear archivo de configuración con las API keys
-          echo "window.TMDB_API_KEY = '${{ secrets.TMDB_API_KEY }}';" > _site/js/env.js
-          echo "window.GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';" >> _site/js/env.js
+          cat > _site/js/env.js << EOL
+          // API Keys configuration
+          window.TMDB_API_KEY = '${{ secrets.TMDB_API_KEY }}';
+          window.GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';
+          console.log('API keys loaded:', {
+              TMDB: window.TMDB_API_KEY ? 'Present' : 'Missing',
+              GEMINI: window.GEMINI_API_KEY ? 'Present' : 'Missing'
+          });
+          EOL
           echo "Archivo de configuración creado en _site/js/env.js"
-          cat _site/js/env.js | sed 's/[A-Za-z0-9]\{30,\}/[HIDDEN]/g'
 
       - name: Copy static files
         run: |

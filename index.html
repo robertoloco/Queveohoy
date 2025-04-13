@@ -97,9 +97,6 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/env.js"></script>
-    <script type="module" src="js/config.js"></script>
-    <script type="module" src="js/main.js"></script>
     <script>
         // Manejo de errores de carga de scripts
         window.addEventListener('error', function(e) {
@@ -109,5 +106,15 @@
             console.error('Error de script:', e);
         }, true);
     </script>
+    <script src="js/env.js"></script>
+    <script type="module">
+        import { API_CONFIG } from './js/config.js';
+        if (!window.TMDB_API_KEY || !window.GEMINI_API_KEY) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = 'Error: No se han encontrado las claves API necesarias.';
+            errorMessage.style.display = 'block';
+        }
+    </script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html> 
