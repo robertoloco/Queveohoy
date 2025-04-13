@@ -40,6 +40,36 @@ jobs:
           mkdir -p _site/js
           mkdir -p _site/css
           mkdir -p _site/images
+          
+          # Verificar que los directorios se crearon correctamente
+          ls -la _site
+
+      - name: Create env.js file
+        run: |
+          # Asegurarse de que el directorio existe
+          mkdir -p _site/js
+          
+          # Crear el archivo env.js
+          cat << 'EOF' > _site/js/env.js
+          // API Keys configuration
+          window.TMDB_API_KEY = '${{ secrets.TMDB_API_KEY }}';
+          window.GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';
+          
+          // Log para verificar que las keys están presentes
+          console.log('API keys loaded:', {
+              TMDB: window.TMDB_API_KEY ? 'Present' : 'Missing',
+              GEMINI: window.GEMINI_API_KEY ? 'Present' : 'Missing'
+          });
+          EOF
+          
+          # Verificar que el archivo se creó
+          if [ -f "_site/js/env.js" ]; then
+            echo "✅ env.js creado correctamente"
+            ls -l _site/js/env.js
+          else
+            echo "❌ Error: env.js no se creó"
+            exit 1
+          fi
 
       - name: Copy static files
         run: |
@@ -48,26 +78,20 @@ jobs:
           cp -r js/* _site/js/ || true
           cp -r images/* _site/images/ || true
           cp index.html _site/
-
-      - name: Create and verify config file
-        run: |
-          # Crear archivo de configuración con las API keys
-          echo "// API Keys configuration" > _site/js/env.js
-          echo "window.TMDB_API_KEY = '${{ secrets.TMDB_API_KEY }}';" >> _site/js/env.js
-          echo "window.GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';" >> _site/js/env.js
-          echo "console.log('API keys loaded:', { TMDB: window.TMDB_API_KEY ? 'Present' : 'Missing', GEMINI: window.GEMINI_API_KEY ? 'Present' : 'Missing' });" >> _site/js/env.js
           
-          # Verificar que el archivo existe y tiene contenido
-          echo "Verificando archivo env.js:"
-          ls -l _site/js/env.js
-          echo "Primeras líneas del archivo (sin mostrar las claves):"
-          head -n 1 _site/js/env.js
-          
-          # Verificar estructura final
+          # Verificar la estructura final
           echo "Estructura del directorio _site:"
           ls -la _site
           echo "Estructura del directorio _site/js:"
           ls -la _site/js/
+          
+          # Verificar específicamente env.js
+          if [ -f "_site/js/env.js" ]; then
+            echo "✅ env.js sigue presente después de copiar archivos"
+          else
+            echo "❌ Error: env.js se ha perdido durante la copia"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
