@@ -41,29 +41,29 @@ jobs:
           mkdir -p _site/css
           mkdir -p _site/images
 
-      - name: Create config file
-        run: |
-          # Crear archivo de configuración con las API keys
-          cat > _site/js/env.js << EOL
-          // API Keys configuration
-          window.TMDB_API_KEY = '${{ secrets.TMDB_API_KEY }}';
-          window.GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';
-          console.log('API keys loaded:', {
-              TMDB: window.TMDB_API_KEY ? 'Present' : 'Missing',
-              GEMINI: window.GEMINI_API_KEY ? 'Present' : 'Missing'
-          });
-          EOL
-          echo "Archivo de configuración creado en _site/js/env.js"
-
       - name: Copy static files
         run: |
           # Copiar archivos estáticos
           cp -r css/* _site/css/ || true
-          cp -r js/* _site/js/
+          cp -r js/* _site/js/ || true
           cp -r images/* _site/images/ || true
           cp index.html _site/
+
+      - name: Create and verify config file
+        run: |
+          # Crear archivo de configuración con las API keys
+          echo "// API Keys configuration" > _site/js/env.js
+          echo "window.TMDB_API_KEY = '${{ secrets.TMDB_API_KEY }}';" >> _site/js/env.js
+          echo "window.GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';" >> _site/js/env.js
+          echo "console.log('API keys loaded:', { TMDB: window.TMDB_API_KEY ? 'Present' : 'Missing', GEMINI: window.GEMINI_API_KEY ? 'Present' : 'Missing' });" >> _site/js/env.js
           
-          # Verificar estructura
+          # Verificar que el archivo existe y tiene contenido
+          echo "Verificando archivo env.js:"
+          ls -l _site/js/env.js
+          echo "Primeras líneas del archivo (sin mostrar las claves):"
+          head -n 1 _site/js/env.js
+          
+          # Verificar estructura final
           echo "Estructura del directorio _site:"
           ls -la _site
           echo "Estructura del directorio _site/js:"
