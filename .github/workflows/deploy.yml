@@ -45,15 +45,15 @@ jobs:
           ls -la _site
 
       - name: Create env.js file
+        env:
+          TMDB_KEY: ${{ secrets.TMDB_API_KEY }}
+          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # Asegurarse de que el directorio existe
-          mkdir -p _site/js
-          
           # Crear el archivo env.js
-          cat << 'EOF' > _site/js/env.js
+          cat > _site/js/env.js << EOF
           // API Keys configuration
-          window.TMDB_API_KEY = '${{ secrets.TMDB_API_KEY }}';
-          window.GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';
+          window.TMDB_API_KEY = "${TMDB_KEY}";
+          window.GEMINI_API_KEY = "${GEMINI_KEY}";
           
           // Log para verificar que las keys están presentes
           console.log('API keys loaded:', {
@@ -62,36 +62,29 @@ jobs:
           });
           EOF
           
-          # Verificar que el archivo se creó
-          if [ -f "_site/js/env.js" ]; then
-            echo "✅ env.js creado correctamente"
-            ls -l _site/js/env.js
+          # Verificar que el archivo se creó y tiene contenido
+          if [ -s "_site/js/env.js" ]; then
+            echo "✅ env.js creado correctamente con $(wc -l < _site/js/env.js) líneas"
           else
-            echo "❌ Error: env.js no se creó"
+            echo "❌ Error: env.js no se creó o está vacío"
             exit 1
           fi
 
       - name: Copy static files
         run: |
-          # Copiar archivos estáticos
-          cp -r css/* _site/css/ || true
-          cp -r js/* _site/js/ || true
-          cp -r images/* _site/images/ || true
+          # Copiar archivos estáticos evitando sobrescribir env.js
+          cp -r css/* _site/css/ 2>/dev/null || true
+          find js -type f ! -name 'env.js' -exec cp {} _site/js/ \; 2>/dev/null || true
+          cp -r images/* _site/images/ 2>/dev/null || true
           cp index.html _site/
           
           # Verificar la estructura final
-          echo "Estructura del directorio _site:"
-          ls -la _site
-          echo "Estructura del directorio _site/js:"
+          echo "Contenido de _site/js:"
           ls -la _site/js/
           
-          # Verificar específicamente env.js
-          if [ -f "_site/js/env.js" ]; then
-            echo "✅ env.js sigue presente después de copiar archivos"
-          else
-            echo "❌ Error: env.js se ha perdido durante la copia"
-            exit 1
-          fi
+          # Mostrar el contenido de env.js (ocultando las claves)
+          echo "Primeras líneas de env.js:"
+          head -n 1 _site/js/env.js
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
