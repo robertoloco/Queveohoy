@@ -125,35 +125,80 @@ class APIClient {
         });
     }
 
-    async getRandomContent(type, platforms) {
+    async getRandomContent(type, platforms = [], genreId = '') {
         try {
-            if (!platforms || platforms.length === 0) {
-                throw new APIError('No se han seleccionado plataformas', 'VALIDATION_ERROR');
+            const params = {
+                'vote_count.gte': 50,
+                'vote_average.gte': 5,
+                'watch_region': API_CONFIG.TMDB_REGION,
+                'language': API_CONFIG.TMDB_LANGUAGE,
+                'sort_by': 'popularity.desc',
+                'include_adult': false,
+                'append_to_response': 'credits,watch/providers'
+            };
+
+            // Añadir género si está seleccionado
+            if (genreId) {
+                params['with_genres'] = genreId;
             }
 
-            const platformIds = platforms.map(p => p.id).join('|');
-            const response = await this._makeRequest(`/discover/${type}`, {
-                with_watch_providers: platformIds,
-                watch_region: API_CONFIG.REGION,
-                language: API_CONFIG.LANGUAGE,
-                sort_by: 'popularity.desc',
-                page: Math.floor(Math.random() * 20) + 1
-            });
+            // Si hay plataformas seleccionadas, filtrar por ellas
+            if (platforms && platforms.length > 0) {
+                const platformIds = platforms
+                    .map(platform => PROVIDER_MAP[platform])
+                    .filter(id => id !== undefined);
 
-            if (!response.results || response.results.length === 0) {
-                throw new APIError('No se encontraron resultados', 'NO_RESULTS');
+                if (platformIds.length > 0) {
+                    params['with_watch_providers'] = platformIds.join('|');
+                }
+            }
+            
+            console.log('Parámetros de búsqueda:', params);
+
+            const url = new URL(`${API_CONFIG.BASE_URL}/discover/${type}`);
+            url.search = new URLSearchParams({
+                ...params,
+                api_key: API_CONFIG.API_KEY
+            }).toString();
+
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
             }
 
-            const randomIndex = Math.floor(Math.random() * response.results.length);
-            const content = response.results[randomIndex];
-
-            if (!content) {
-                throw new APIError('Error al seleccionar contenido aleatorio', 'INVALID_CONTENT');
+            const data = await response.json();
+            
+            if (!data.results || data.results.length === 0) {
+                throw new Error('No se encontraron resultados para los criterios seleccionados. Intenta con otros filtros.');
             }
 
-            return content;
+            // Obtener un resultado aleatorio
+            const randomIndex = Math.floor(Math.random() * data.results.length);
+            const basicContent = data.results[randomIndex];
+
+            if (!basicContent) {
+                throw new Error('Error al seleccionar contenido aleatorio');
+            }
+
+            // Obtener detalles completos del contenido
+            const detailsUrl = new URL(`${API_CONFIG.BASE_URL}/${type}/${basicContent.id}`);
+            detailsUrl.search = new URLSearchParams({
+                api_key: API_CONFIG.API_KEY,
+                language: API_CONFIG.TMDB_LANGUAGE,
+                append_to_response: 'credits,watch/providers'
+            }).toString();
+
+            const detailsResponse = await fetch(detailsUrl);
+            if (!detailsResponse.ok) {
+                throw new Error(`Error al obtener detalles: ${detailsResponse.status}`);
+            }
+
+            const contentDetails = await detailsResponse.json();
+            return contentDetails;
+
         } catch (error) {
-            console.error('Error en getRandomContent:', error);
+            console.error('Error detallado al obtener contenido aleatorio:', error);
             throw error;
         }
     }
@@ -202,68 +247,4 @@ async function processRecommendationsWithImages(recommendations) {
         ...recommendations,
         recomendaciones: processedRecommendations
     };
-}
-
-export async function getRandomContent(type, platforms = [], genreId = '') {
-    try {
-        const params = {
-            'vote_count.gte': 50,
-            'vote_average.gte': 5,
-            'with_watch_providers': '',
-            'watch_region': API_CONFIG.TMDB_REGION,
-            'language': API_CONFIG.TMDB_LANGUAGE,
-            'sort_by': 'popularity.desc',
-            'include_adult': false
-        };
-
-        // Añadir género si está seleccionado
-        if (genreId) {
-            params['with_genres'] = genreId;
-        }
-
-        // Obtener los IDs de las plataformas seleccionadas
-        const platformIds = platforms
-            .map(platform => PROVIDER_MAP[platform])
-            .filter(id => id !== undefined);
-
-        if (platformIds.length === 0) {
-            throw new Error('Por favor, selecciona al menos una plataforma de streaming válida.');
-        }
-
-        params['with_watch_providers'] = platformIds.join('|');
-        
-        console.log('Parámetros de búsqueda:', params);
-
-        const url = new URL(`${API_CONFIG.BASE_URL}/discover/${type}`);
-        url.search = new URLSearchParams({
-            ...params,
-            api_key: API_CONFIG.API_KEY
-        }).toString();
-
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.results || data.results.length === 0) {
-            throw new Error('No se encontraron resultados para los criterios seleccionados. Intenta con otros filtros.');
-        }
-
-        // Obtener un resultado aleatorio
-        const randomIndex = Math.floor(Math.random() * data.results.length);
-        const content = data.results[randomIndex];
-
-        if (!content) {
-            throw new Error('Error al seleccionar contenido aleatorio');
-        }
-
-        return content;
-
-    } catch (error) {
-        console.error('Error detallado al obtener contenido aleatorio:', error);
-        throw error;
-    }
 } 

@@ -160,10 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tipo: type,
                 genero: genre
             });
-
-            if (selectedPlatforms.length === 0) {
-                throw new Error('Por favor, selecciona al menos una plataforma de streaming.');
-            }
             
             const content = await getRandomContent(type, selectedPlatforms, genre);
             showResult(content, type);
