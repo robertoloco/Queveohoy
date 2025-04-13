@@ -1,4 +1,4 @@
-import { API_CONFIG, PROVIDER_MAP } from '../config/config.js';
+import { API_CONFIG, PROVIDER_MAP } from './config.js';
 import { cache } from './cache.js';
 
 class APIError extends Error {

@@ -1,4 +1,4 @@
-import { API_CONFIG, PROVIDER_MAP } from '../config/config.js';
+import { API_CONFIG, PROVIDER_MAP } from './config.js';
 
 // Clase para manejar las solicitudes a la API de Gemini
 class GeminiAPI {
