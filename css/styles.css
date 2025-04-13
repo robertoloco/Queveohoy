@@ -682,4 +682,43 @@ h1 {
 #buscarReferencia:hover {
     background-color: #0ca746;
     transform: translateY(-2px);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loading {
+    text-align: center;
+    margin: 20px 0;
+}
+
+#loading p {
+    margin-top: 10px;
+    color: #666;
+}
+
+#error-message {
+    background-color: #fff5f5;
+    color: #e53e3e;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 15px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#error-message.error-critical {
+    background-color: #fff5f5;
+    border-left: 4px solid #e53e3e;
 } 

@@ -87,34 +87,33 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Función principal para buscar contenido
-    const buscarContenido = async () => {
+    async function buscarContenido() {
         try {
-            showLoading();
-            resultado.innerHTML = '';
+            const plataformas = Array.from(document.querySelectorAll('input[name="plataforma"]:checked'))
+                .map(input => input.value);
 
-            const plataformasSeleccionadas = getPlataformasSeleccionadas();
-            const generoSeleccionado = getGeneroSeleccionado();
-            
-            if (plataformasSeleccionadas.length === 0) {
-                console.log('No hay plataformas seleccionadas, se usará una aleatoria');
+            if (plataformas.length === 0) {
+                throw new Error('Por favor, selecciona al menos una plataforma');
             }
 
-            console.log('Buscando contenido con:', {
-                tipo: tipoContenido,
-                plataformas: plataformasSeleccionadas,
-                genero: generoSeleccionado
-            });
+            const tipo = document.querySelector('input[name="tipo"]:checked').value;
+            const genero = document.getElementById('genero').value;
+
+            mostrarCargando(true);
+            const resultado = await api.getRandomContent(tipo, plataformas, genero);
             
-            const contenido = await getRandomContent(tipoContenido, plataformasSeleccionadas, generoSeleccionado);
-            
-            hideLoading();
-            showResult(contenido, tipoContenido);
+            if (!resultado) {
+                throw new Error('No se encontraron resultados');
+            }
+
+            mostrarResultado(resultado);
         } catch (error) {
-            console.error('Error completo:', error);
-            hideLoading();
-            showError('No se pudo obtener una recomendación. Por favor, selecciona al menos una plataforma e intenta de nuevo.');
+            console.error('Error al buscar contenido:', error);
+            mostrarError(error.message);
+        } finally {
+            mostrarCargando(false);
         }
-    };
+    }
 
     // Función para buscar contenido basado en referencia
     const buscarPorReferencia = async () => {
@@ -185,4 +184,41 @@ document.addEventListener('DOMContentLoaded', () => {
             buscarPorReferencia();
         }
     });
+
+    async function obtenerRecomendaciones(contenido, tipo) {
+        try {
+            if (!contenido || !tipo) {
+                throw new Error('Contenido o tipo no especificado');
+            }
+
+            mostrarCargando(true);
+            const recomendaciones = await geminiAPI.getRecommendations(contenido, tipo);
+            
+            if (!recomendaciones || recomendaciones.length === 0) {
+                throw new Error('No se pudieron obtener recomendaciones');
+            }
+
+            mostrarRecomendaciones(recomendaciones);
+        } catch (error) {
+            console.error('Error al obtener recomendaciones:', error);
+            mostrarError(error.message);
+        } finally {
+            mostrarCargando(false);
+        }
+    }
+
+    function mostrarError(mensaje) {
+        const errorDiv = document.getElementById('error-message');
+        errorDiv.textContent = mensaje;
+        errorDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    }
+
+    function mostrarCargando(mostrar) {
+        const cargandoDiv = document.getElementById('loading');
+        cargandoDiv.style.display = mostrar ? 'block' : 'none';
+    }
 }); 

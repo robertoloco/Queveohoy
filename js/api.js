@@ -2,18 +2,22 @@ import { API_CONFIG, PROVIDER_MAP } from './config.js';
 import { cache } from './cache.js';
 
 class APIError extends Error {
-    constructor(message, status, code) {
+    constructor(message, code) {
         super(message);
         this.name = 'APIError';
-        this.status = status;
         this.code = code;
     }
 }
 
 class APIClient {
     constructor() {
+        this.baseURL = 'https://api.themoviedb.org/3';
+        this.rateLimit = {
+            requests: 40,
+            interval: 10000
+        };
         this.requestQueue = [];
-        this.lastRequestTime = 0;
+        this.isProcessing = false;
     }
 
     async _waitForRateLimit() {
@@ -30,33 +34,44 @@ class APIClient {
         this.lastRequestTime = Date.now();
     }
 
-    async _makeRequest(url, options = {}, retries = 3) {
-        await this._waitForRateLimit();
+    async _makeRequest(endpoint, params = {}) {
+        const maxRetries = 3;
+        let retries = 0;
 
-        try {
-            const response = await fetch(url, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
+        while (retries < maxRetries) {
+            try {
+                const url = new URL(`${this.baseURL}${endpoint}`);
+                url.search = new URLSearchParams({
+                    ...params,
+                    api_key: API_CONFIG.API_KEY
+                }).toString();
+
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new APIError('API key inválida', 'AUTH_ERROR');
+                    }
+                    if (response.status === 429) {
+                        await this._handleRateLimit();
+                        retries++;
+                        continue;
+                    }
+                    throw new APIError(`Error HTTP: ${response.status}`, 'HTTP_ERROR');
                 }
-            });
 
-            if (!response.ok) {
-                throw new APIError(
-                    `Error en la petición: ${response.statusText}`,
-                    response.status,
-                    response.status
-                );
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                if (error instanceof APIError) {
+                    throw error;
+                }
+                retries++;
+                if (retries === maxRetries) {
+                    throw new APIError('Error al conectar con la API', 'NETWORK_ERROR');
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000 * retries));
             }
-
-            return await response.json();
-        } catch (error) {
-            if (retries > 0 && (error instanceof APIError && error.status >= 500)) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                return this._makeRequest(url, options, retries - 1);
-            }
-            throw error;
         }
     }
 
@@ -108,6 +123,39 @@ class APIClient {
         return this.get(`/search/${type}`, {
             query: encodeURIComponent(query)
         });
+    }
+
+    async getRandomContent(type, platforms) {
+        try {
+            if (!platforms || platforms.length === 0) {
+                throw new APIError('No se han seleccionado plataformas', 'VALIDATION_ERROR');
+            }
+
+            const platformIds = platforms.map(p => p.id).join('|');
+            const response = await this._makeRequest(`/discover/${type}`, {
+                with_watch_providers: platformIds,
+                watch_region: API_CONFIG.REGION,
+                language: API_CONFIG.LANGUAGE,
+                sort_by: 'popularity.desc',
+                page: Math.floor(Math.random() * 20) + 1
+            });
+
+            if (!response.results || response.results.length === 0) {
+                throw new APIError('No se encontraron resultados', 'NO_RESULTS');
+            }
+
+            const randomIndex = Math.floor(Math.random() * response.results.length);
+            const content = response.results[randomIndex];
+
+            if (!content) {
+                throw new APIError('Error al seleccionar contenido aleatorio', 'INVALID_CONTENT');
+            }
+
+            return content;
+        } catch (error) {
+            console.error('Error en getRandomContent:', error);
+            throw error;
+        }
     }
 }
 

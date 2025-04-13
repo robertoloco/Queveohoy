@@ -6,10 +6,15 @@ class GeminiAPI {
         this.apiKey = API_CONFIG.GEMINI_API_KEY;
         // Usando el modelo correcto gemini-2.0-flash en la ruta v1beta
         this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+        this.timeout = 10000; // 10 segundos
     }
 
     async getRecommendations(referencia, tipo, plataformas = [], genero = '') {
         try {
+            if (!referencia || !tipo) {
+                throw new GeminiError('Referencia o tipo no especificado', 'VALIDATION_ERROR');
+            }
+
             // Construir el prompt para Gemini
             let prompt = `Eres un experto en películas y series. Necesito 5 recomendaciones basadas en:
                 - Referencia: "${referencia}" (puede ser un director o una película/serie que le gustó al usuario)
@@ -44,6 +49,9 @@ class GeminiAPI {
 
             console.log('Enviando solicitud a Gemini:', requestData);
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
             try {
                 // Hacer la solicitud a la API
                 const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
@@ -51,11 +59,20 @@ class GeminiAPI {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(requestData)
+                    body: JSON.stringify(requestData),
+                    signal: controller.signal
                 });
 
+                clearTimeout(timeoutId);
+
                 if (!response.ok) {
-                    throw new Error(`Error en la respuesta de Gemini: ${response.status} ${response.statusText}`);
+                    if (response.status === 401) {
+                        throw new GeminiError('API key inválida', 'AUTH_ERROR');
+                    }
+                    if (response.status === 429) {
+                        throw new GeminiError('Límite de solicitudes excedido', 'RATE_LIMIT');
+                    }
+                    throw new GeminiError(`Error HTTP: ${response.status}`, 'HTTP_ERROR');
                 }
 
                 const data = await response.json();
@@ -70,11 +87,11 @@ class GeminiAPI {
                 }
             } catch (fetchError) {
                 console.error('Error en la solicitud a Gemini:', fetchError);
-                return this.getFallbackRecommendationsText(referencia, tipo);
+                throw fetchError;
             }
         } catch (error) {
             console.error('Error al obtener recomendaciones de Gemini:', error);
-            return this.getFallbackRecommendationsText(referencia, tipo);
+            throw error;
         }
     }
 
@@ -329,6 +346,14 @@ class GeminiAPI {
             .replace(/^\s*-\s+/g, '') // Eliminar guiones al principio
             // Asegurar que la justificación comience con mayúscula
             .replace(/^([a-z])/, function(m) { return m.toUpperCase(); });
+    }
+}
+
+class GeminiError extends Error {
+    constructor(message, code) {
+        super(message);
+        this.name = 'GeminiError';
+        this.code = code;
     }
 }
 
