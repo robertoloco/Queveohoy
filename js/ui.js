@@ -1,4 +1,4 @@
-import { PROVIDER_MAP } from '../config/config.js';
+import { PROVIDER_MAP } from '.config.js';
 import { searchContentImage } from './api.js';
 
 export function showLoading() {
