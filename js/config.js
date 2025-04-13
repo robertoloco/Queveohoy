@@ -1,7 +1,7 @@
 // Configuración de la API
 export const API_CONFIG = {
-    API_KEY: '6f8a752ff9858fade9e122cbe6896b63',
-    GEMINI_API_KEY: 'AIzaSyBH4mXio_L0JAyoJMbSHG5twq0KrbxS7v4',
+    API_KEY: window.TMDB_API_KEY || '',
+    GEMINI_API_KEY: window.GEMINI_API_KEY || '',
     TMDB_LANGUAGE: 'es-ES',
     TMDB_REGION: 'ES',
     BASE_URL: 'https://api.themoviedb.org/3',
