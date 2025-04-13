@@ -149,29 +149,29 @@ document.addEventListener('DOMContentLoaded', () => {
     botonSorpresa.addEventListener('click', async () => {
         try {
             showLoading();
-            const selectedPlatforms = getPlataformasSeleccionadas();
+            const selectedPlatforms = Array.from(document.querySelectorAll('#plataformas input[type="checkbox"]:checked'))
+                .map(input => input.value);
+
             const type = document.getElementById('btnPelicula').classList.contains('active') ? 'movie' : 'tv';
             const genre = document.getElementById('genreSelect').value;
-
-            if (selectedPlatforms.length === 0) {
-                showError('Por favor, selecciona al menos una plataforma de streaming.');
-                hideLoading();
-                return;
-            }
 
             console.log('Iniciando búsqueda con:', {
                 plataformas: selectedPlatforms,
                 tipo: type,
                 genero: genre
             });
+
+            if (selectedPlatforms.length === 0) {
+                throw new Error('Por favor, selecciona al menos una plataforma de streaming.');
+            }
             
             const content = await getRandomContent(type, selectedPlatforms, genre);
-            hideLoading();
             showResult(content, type);
         } catch (error) {
             console.error('Error detallado:', error);
+            showError(error.message || 'Error al obtener contenido. Por favor, intenta de nuevo.');
+        } finally {
             hideLoading();
-            showError('No se encontró contenido para los criterios seleccionados. Por favor, intenta con diferentes plataformas o géneros.');
         }
     });
 

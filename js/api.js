@@ -209,8 +209,9 @@ export async function getRandomContent(type, platforms = [], genreId = '') {
         const params = {
             'vote_count.gte': 50,
             'vote_average.gte': 5,
-            'language': API_CONFIG.LANGUAGE,
-            'watch_region': API_CONFIG.REGION,
+            'with_watch_providers': '',
+            'watch_region': API_CONFIG.TMDB_REGION,
+            'language': API_CONFIG.TMDB_LANGUAGE,
             'sort_by': 'popularity.desc',
             'include_adult': false
         };
@@ -221,61 +222,48 @@ export async function getRandomContent(type, platforms = [], genreId = '') {
         }
 
         // Obtener los IDs de las plataformas seleccionadas
-        let platformIds = [];
-        if (platforms && platforms.length > 0) {
-            platformIds = platforms
-                .map(platform => {
-                    const id = PROVIDER_MAP[platform];
-                    console.log(`Plataforma: ${platform}, ID: ${id}`);
-                    return id;
-                })
-                .filter(id => id !== undefined);
-        }
+        const platformIds = platforms
+            .map(platform => PROVIDER_MAP[platform])
+            .filter(id => id !== undefined);
 
-        // Si no hay plataformas seleccionadas o válidas, mostrar error
         if (platformIds.length === 0) {
             throw new Error('Por favor, selecciona al menos una plataforma de streaming válida.');
         }
 
-        // Añadir los IDs de plataformas a los parámetros
         params['with_watch_providers'] = platformIds.join('|');
         
-        console.log('Buscando contenido con parámetros:', params);
+        console.log('Parámetros de búsqueda:', params);
+
+        const url = new URL(`${API_CONFIG.BASE_URL}/discover/${type}`);
+        url.search = new URLSearchParams({
+            ...params,
+            api_key: API_CONFIG.API_KEY
+        }).toString();
+
+        const response = await fetch(url);
         
-        const response = await api.discoverContent(type, params);
+        if (!response.ok) {
+            throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
         
-        if (!response.results || response.results.length === 0) {
+        if (!data.results || data.results.length === 0) {
             throw new Error('No se encontraron resultados para los criterios seleccionados. Intenta con otros filtros.');
         }
 
-        // Filtrar resultados que tengan poster_path
-        const validResults = response.results.filter(item => item.poster_path);
-        
-        if (validResults.length === 0) {
-            throw new Error('No se encontraron resultados con imágenes disponibles. Intenta con otros filtros.');
+        // Obtener un resultado aleatorio
+        const randomIndex = Math.floor(Math.random() * data.results.length);
+        const content = data.results[randomIndex];
+
+        if (!content) {
+            throw new Error('Error al seleccionar contenido aleatorio');
         }
 
-        // Seleccionar un resultado aleatorio
-        const randomIndex = Math.floor(Math.random() * validResults.length);
-        const selectedResult = validResults[randomIndex];
-
-        // Obtener detalles adicionales
-        const details = type === 'movie' 
-            ? await api.getMovieDetails(selectedResult.id)
-            : await api.getTVDetails(selectedResult.id);
-
-        if (!details) {
-            throw new Error('No se pudieron obtener los detalles del contenido seleccionado.');
-        }
-
-        // Combinar los resultados
-        return {
-            ...selectedResult,
-            ...details
-        };
+        return content;
 
     } catch (error) {
         console.error('Error detallado al obtener contenido aleatorio:', error);
-        throw new Error(error.message || 'Error al obtener contenido. Por favor, intenta de nuevo.');
+        throw error;
     }
 } 
