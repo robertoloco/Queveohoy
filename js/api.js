@@ -11,19 +11,17 @@ class APIError extends Error {
 
 class APIClient {
     constructor() {
-        this.baseURL = 'https://api.themoviedb.org/3';
-        this.rateLimit = {
-            requests: 40,
-            interval: 10000
-        };
+        this.baseURL = API_CONFIG.BASE_URL;
+        this.rateLimit = API_CONFIG.RATE_LIMIT;
         this.requestQueue = [];
         this.isProcessing = false;
+        this.lastRequestTime = 0;
     }
 
     async _waitForRateLimit() {
         const now = Date.now();
         const timeSinceLastRequest = now - this.lastRequestTime;
-        const minTimeBetweenRequests = API_CONFIG.RATE_LIMIT.TIME_WINDOW / API_CONFIG.RATE_LIMIT.MAX_REQUESTS;
+        const minTimeBetweenRequests = this.rateLimit.TIME_WINDOW / this.rateLimit.MAX_REQUESTS;
 
         if (timeSinceLastRequest < minTimeBetweenRequests) {
             await new Promise(resolve => 
@@ -35,6 +33,8 @@ class APIClient {
     }
 
     async _makeRequest(endpoint, params = {}) {
+        await this._waitForRateLimit();
+        
         const maxRetries = 3;
         let retries = 0;
 
@@ -43,7 +43,8 @@ class APIClient {
                 const url = new URL(`${this.baseURL}${endpoint}`);
                 url.search = new URLSearchParams({
                     ...params,
-                    api_key: API_CONFIG.API_KEY
+                    api_key: API_CONFIG.API_KEY,
+                    language: API_CONFIG.TMDB_LANGUAGE
                 }).toString();
 
                 const response = await fetch(url);
@@ -53,7 +54,7 @@ class APIClient {
                         throw new APIError('API key inválida', 'AUTH_ERROR');
                     }
                     if (response.status === 429) {
-                        await this._handleRateLimit();
+                        await new Promise(resolve => setTimeout(resolve, 1000));
                         retries++;
                         continue;
                     }

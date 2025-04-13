@@ -1,4 +1,4 @@
-import { getRandomContent } from './api.js';
+import { api } from './api.js';
 import { showLoading, hideLoading, showError, showResult, showGeminiRecommendations } from './ui.js';
 import { GENRES, PROVIDER_MAP } from './config.js';
 import { geminiAPI } from './gemini.js';
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 genero: genre
             });
             
-            const content = await getRandomContent(type, selectedPlatforms, genre);
+            const content = await api.getRandomContent(type, selectedPlatforms, genre);
             showResult(content, type);
         } catch (error) {
             console.error('Error detallado:', error);
