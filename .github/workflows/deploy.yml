@@ -39,59 +39,11 @@ jobs:
           # Crear directorio _site
           mkdir -p _site/js
           
-          # Copiar archivos estáticos primero
+          # Copiar archivos estáticos
           cp -r css _site/
           cp -r js/* _site/js/
           cp -r images _site/ 2>/dev/null || true
           cp index.html _site/
-          cp -r config _site/
-          
-          # Crear config.js con las claves
-          cat > _site/js/config.js << EOL
-          // Configuración generada durante el build
-          const config = {
-              _API_KEY: '${{ secrets.TMDB_API_KEY }}',
-              _GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}',
-              TMDB_LANGUAGE: '${{ secrets.TMDB_LANGUAGE || 'es-ES' }}',
-              TMDB_REGION: '${{ secrets.TMDB_REGION || 'ES' }}',
-              BASE_URL: 'https://api.themoviedb.org/3',
-              IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/w500',
-              RATE_LIMIT: {
-                  MAX_REQUESTS: 40,
-                  TIME_WINDOW: 10000
-              },
-              get API_KEY() {
-                  if (!this._API_KEY) {
-                      console.error('TMDB API Key no encontrada');
-                      return '';
-                  }
-                  return this._API_KEY;
-              },
-              set API_KEY(value) {
-                  this._API_KEY = value;
-              },
-              get GEMINI_API_KEY() {
-                  if (!this._GEMINI_API_KEY) {
-                      console.error('Gemini API Key no encontrada');
-                      return '';
-                  }
-                  return this._GEMINI_API_KEY;
-              },
-              set GEMINI_API_KEY(value) {
-                  this._GEMINI_API_KEY = value;
-              }
-          };
-
-          // Inicializar valores
-          config._API_KEY = '${{ secrets.TMDB_API_KEY }}';
-          config._GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';
-
-          // Exponer configuración globalmente
-          window.API_CONFIG = config;
-
-          // Exportar para módulos ES6
-          export { config as API_CONFIG };
-          EOL
           
           # Verificar estructura
           echo "Estructura del directorio _site/js:"
