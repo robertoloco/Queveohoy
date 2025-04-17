@@ -11,8 +11,9 @@ class APIError extends Error {
 
 class APIClient {
     constructor() {
-        this.baseURL = API_CONFIG.BASE_URL;
-        this.rateLimit = API_CONFIG.RATE_LIMIT;
+        this.baseURL = API_CONFIG.baseUrl;
+        this.imageBaseURL = API_CONFIG.imageBaseUrl;
+        this.rateLimit = API_CONFIG.rateLimit;
         this.requestQueue = [];
         this.isProcessing = false;
         this.lastRequestTime = 0;
@@ -21,7 +22,8 @@ class APIClient {
     async _waitForRateLimit() {
         const now = Date.now();
         const timeSinceLastRequest = now - this.lastRequestTime;
-        const minTimeBetweenRequests = this.rateLimit.TIME_WINDOW / this.rateLimit.MAX_REQUESTS;
+        const minTimeBetweenRequests = 
+            (this.rateLimit.perSeconds * 1000) / this.rateLimit.maxRequests;
 
         if (timeSinceLastRequest < minTimeBetweenRequests) {
             await new Promise(resolve => 
@@ -44,7 +46,7 @@ class APIClient {
                 url.search = new URLSearchParams({
                     ...params,
                     api_key: API_CONFIG.API_KEY,
-                    language: API_CONFIG.TMDB_LANGUAGE
+                    language: API_CONFIG.language
                 }).toString();
 
                 const response = await fetch(url);
@@ -79,11 +81,11 @@ class APIClient {
     async get(endpoint, params = {}) {
         const queryParams = new URLSearchParams({
             api_key: API_CONFIG.API_KEY,
-            language: API_CONFIG.LANGUAGE,
+            language: API_CONFIG.language,
             ...params
         });
 
-        const url = `${API_CONFIG.BASE_URL}${endpoint}?${queryParams}`;
+        const url = `${API_CONFIG.baseUrl}${endpoint}?${queryParams}`;
         const cacheKey = url;
 
         // Intentar obtener de caché
@@ -131,8 +133,8 @@ class APIClient {
             const params = {
                 'vote_count.gte': 50,
                 'vote_average.gte': 5,
-                'watch_region': API_CONFIG.TMDB_REGION,
-                'language': API_CONFIG.TMDB_LANGUAGE,
+                'watch_region': API_CONFIG.region,
+                'language': API_CONFIG.language,
                 'sort_by': 'popularity.desc',
                 'include_adult': false,
                 'append_to_response': 'credits,watch/providers'
@@ -154,50 +156,34 @@ class APIClient {
                 }
             }
             
+            console.log('Iniciando búsqueda con:', {
+                plataformas: platforms,
+                tipo: type,
+                genero: genreId
+            });
+            
             console.log('Parámetros de búsqueda:', params);
 
-            const url = new URL(`${API_CONFIG.BASE_URL}/discover/${type}`);
-            url.search = new URLSearchParams({
-                ...params,
-                api_key: API_CONFIG.API_KEY
-            }).toString();
-
-            const response = await fetch(url);
+            const response = await this._makeRequest(`/discover/${type}`, params);
             
-            if (!response.ok) {
-                throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            
-            if (!data.results || data.results.length === 0) {
+            if (!response.results || response.results.length === 0) {
                 throw new Error('No se encontraron resultados para los criterios seleccionados. Intenta con otros filtros.');
             }
 
             // Obtener un resultado aleatorio
-            const randomIndex = Math.floor(Math.random() * data.results.length);
-            const basicContent = data.results[randomIndex];
+            const randomIndex = Math.floor(Math.random() * response.results.length);
+            const basicContent = response.results[randomIndex];
 
             if (!basicContent) {
                 throw new Error('Error al seleccionar contenido aleatorio');
             }
 
             // Obtener detalles completos del contenido
-            const detailsUrl = new URL(`${API_CONFIG.BASE_URL}/${type}/${basicContent.id}`);
-            detailsUrl.search = new URLSearchParams({
-                api_key: API_CONFIG.API_KEY,
-                language: API_CONFIG.TMDB_LANGUAGE,
+            const contentDetails = await this._makeRequest(`/${type}/${basicContent.id}`, {
                 append_to_response: 'credits,watch/providers'
-            }).toString();
+            });
 
-            const detailsResponse = await fetch(detailsUrl);
-            if (!detailsResponse.ok) {
-                throw new Error(`Error al obtener detalles: ${detailsResponse.status}`);
-            }
-
-            const contentDetails = await detailsResponse.json();
             return contentDetails;
-
         } catch (error) {
             console.error('Error detallado al obtener contenido aleatorio:', error);
             throw error;
@@ -205,13 +191,14 @@ class APIClient {
     }
 }
 
-export const api = new APIClient();
+// Exportar una instancia única del cliente
+export const apiClient = new APIClient();
 
 // Función para buscar la imagen de un contenido por título
 export async function searchContentImage(title) {
     try {
         const query = encodeURIComponent(title);
-        const url = `${API_CONFIG.BASE_URL}/search/multi?api_key=${API_CONFIG.API_KEY}&language=${API_CONFIG.LANGUAGE}&query=${query}`;
+        const url = `${API_CONFIG.baseUrl}/search/multi?api_key=${API_CONFIG.API_KEY}&language=${API_CONFIG.language}&query=${query}`;
         
         const response = await fetch(url);
         const data = await response.json();
@@ -219,7 +206,7 @@ export async function searchContentImage(title) {
         if (data.results && data.results.length > 0) {
             const firstResult = data.results[0];
             if (firstResult.poster_path) {
-                return `${API_CONFIG.IMAGE_BASE_URL}${firstResult.poster_path}`;
+                return `${API_CONFIG.imageBaseUrl}${firstResult.poster_path}`;
             }
         }
         
