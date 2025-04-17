@@ -8,94 +8,58 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
       - name: Create build directory
         run: |
-          mkdir -p _site/js
-          mkdir -p _site/css
-          mkdir -p _site/images
-          echo "Directorios creados:"
-          ls -la _site/
-
+          echo "🏗️ Creando estructura de directorios..."
+          mkdir -p js
+          mkdir -p css
+          mkdir -p images
+          
       - name: Create env.js file
         env:
           TMDB_KEY: ${{ secrets.TMDB_API_KEY }}
           GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "Creando env.js..."
+          echo "🔑 Verificando claves API..."
           
-          # Verificar que las claves existen
           if [ -z "$TMDB_KEY" ]; then
             echo "❌ Error: TMDB_API_KEY no está configurada"
             exit 1
+          else
+            echo "✅ TMDB_API_KEY encontrada"
           fi
           
           if [ -z "$GEMINI_KEY" ]; then
             echo "❌ Error: GEMINI_API_KEY no está configurada"
             exit 1
+          else
+            echo "✅ GEMINI_API_KEY encontrada"
           fi
           
-          # Crear el archivo env.js
-          echo "// API Keys configuration" > _site/js/env.js
-          echo "window.TMDB_API_KEY = '${TMDB_KEY}';" >> _site/js/env.js
-          echo "window.GEMINI_API_KEY = '${GEMINI_KEY}';" >> _site/js/env.js
-          echo "console.log('🔑 API keys cargadas');" >> _site/js/env.js
+          echo "📝 Creando env.js..."
+          cat > js/env.js << EOF
+          // API Keys configuration
+          window.TMDB_API_KEY = '${TMDB_KEY}';
+          window.GEMINI_API_KEY = '${GEMINI_KEY}';
           
-          # Verificar el contenido sin mostrar las claves
-          echo "✅ env.js creado en _site/js/"
-          echo "Contenido de env.js (sin claves):"
-          grep -v "API_KEY" _site/js/env.js || true
-
-      - name: Copy static files
-        run: |
-          echo "Copiando archivos estáticos..."
-          cp -r css/* _site/css/ || echo "No hay archivos CSS para copiar"
-          cp -r js/* _site/js/ || echo "No hay archivos JS para copiar"
-          cp -r images/* _site/images/ || echo "No hay imágenes para copiar"
-          cp index.html _site/ || echo "No se encontró index.html"
+          console.log('🔑 API keys cargadas correctamente');
+          EOF
           
-          echo "Contenido final de _site:"
-          ls -la _site/
-          echo "Contenido de _site/js:"
-          ls -la _site/js/
+          echo "✅ env.js creado en js/"
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4 
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .
+          branch: main 
