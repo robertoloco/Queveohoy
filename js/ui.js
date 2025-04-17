@@ -1,23 +1,60 @@
 import { PROVIDER_MAP } from './config.js';
 import { searchContentImage } from './api.js';
 
+const PLACEHOLDER_IMAGE = 'img/placeholder.svg';
+
+async function loadImage(url) {
+    try {
+        const img = new Image();
+        const promise = new Promise((resolve, reject) => {
+            img.onload = () => resolve(url);
+            img.onerror = () => reject(new Error(`Error cargando imagen: ${url}`));
+        });
+        img.src = url;
+        return await promise;
+    } catch (error) {
+        console.error('Error cargando imagen:', error);
+        return PLACEHOLDER_IMAGE;
+    }
+}
+
+async function getThumbnailUrl(content) {
+    try {
+        if (!content.poster_path && !content.backdrop_path) {
+            throw new Error('No hay imagen disponible');
+        }
+        const basePath = 'https://image.tmdb.org/t/p/w500';
+        const imagePath = content.poster_path || content.backdrop_path;
+        return await loadImage(`${basePath}${imagePath}`);
+    } catch (error) {
+        console.warn('Error obteniendo thumbnail:', error);
+        return PLACEHOLDER_IMAGE;
+    }
+}
+
 export function showLoading() {
     const loadingMessage = document.getElementById('loadingMessage');
-    loadingMessage.style.display = 'block';
+    if (loadingMessage) {
+        loadingMessage.style.display = 'block';
+    }
 }
 
 export function hideLoading() {
     const loadingMessage = document.getElementById('loadingMessage');
-    loadingMessage.style.display = 'none';
+    if (loadingMessage) {
+        loadingMessage.style.display = 'none';
+    }
 }
 
 export function showError(message) {
     const resultado = document.getElementById('resultado');
-    resultado.innerHTML = `
-        <div class="error-message">
-            <p>${message}</p>
-        </div>
-    `;
+    if (resultado) {
+        resultado.innerHTML = `
+            <div class="error-message">
+                <p>${message}</p>
+            </div>
+        `;
+    }
 }
 
 export function showResult(content, type) {
@@ -233,39 +270,13 @@ export function showResult(content, type) {
     document.head.appendChild(style);
 }
 
-const PLACEHOLDER_IMAGE = 'img/placeholder.svg';
-
-async function loadImage(url) {
-    try {
-        const img = new Image();
-        const promise = new Promise((resolve, reject) => {
-            img.onload = () => resolve(url);
-            img.onerror = () => reject(new Error(`Error cargando imagen: ${url}`));
-        });
-        img.src = url;
-        return await promise;
-    } catch (error) {
-        console.error('Error cargando imagen:', error);
-        return PLACEHOLDER_IMAGE;
-    }
-}
-
-async function getThumbnailUrl(content) {
-    try {
-        if (!content.poster_path && !content.backdrop_path) {
-            throw new Error('No hay imagen disponible');
-        }
-        const basePath = 'https://image.tmdb.org/t/p/w500';
-        const imagePath = content.poster_path || content.backdrop_path;
-        return await loadImage(`${basePath}${imagePath}`);
-    } catch (error) {
-        console.warn('Error obteniendo thumbnail:', error);
-        return PLACEHOLDER_IMAGE;
-    }
-}
-
-async function showGeminiRecommendations(recommendations, query) {
+export async function showGeminiRecommendations(recommendations, query) {
     const container = document.getElementById('recommendations');
+    if (!container) {
+        console.error('No se encontró el contenedor de recomendaciones');
+        return;
+    }
+
     container.innerHTML = '';
 
     const title = document.createElement('h2');
@@ -412,12 +423,12 @@ function getRandomPlatforms() {
     return selectedPlatforms;
 }
 
-// Añadir estos estilos al final del archivo
+// Estilos
 const styles = `
 .recommendation-card {
-    background: #fff;
+    background: #2a2a2a;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     padding: 16px;
     margin: 8px;
     display: flex;
@@ -430,35 +441,29 @@ const styles = `
     flex-direction: column;
 }
 
-.recommendation-title {
-    font-size: 1.2em;
+.recommendation-content h3 {
+    color: #ffffff;
     margin: 0 0 12px 0;
-    color: #2c3e50;
+    font-size: 1.2em;
 }
 
-.recommendation-description {
-    flex: 1;
+.recommendation-content p {
+    color: #cccccc;
     margin: 0 0 16px 0;
-    color: #34495e;
     line-height: 1.5;
 }
 
-.platform-section {
+.platforms {
     margin-top: auto;
-    padding: 12px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-.platform-label {
-    font-weight: 600;
-    color: #6c757d;
-    margin-right: 8px;
-}
-
-.platform-value {
-    color: #2c3e50;
+.platform-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
 
 .recommendations-grid {
@@ -472,11 +477,6 @@ const styles = `
     .recommendation-card {
         margin: 8px 0;
     }
-    
-    .platform-section {
-        padding: 8px;
-        margin-top: 12px;
-    }
 }
 `;
 
@@ -484,11 +484,3 @@ const styles = `
 const styleSheet = document.createElement('style');
 styleSheet.textContent = styles;
 document.head.appendChild(styleSheet); 
-
-export {
-    showLoading,
-    hideLoading,
-    showError,
-    showResult,
-    showGeminiRecommendations
-}; 
