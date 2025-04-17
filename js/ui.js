@@ -142,22 +142,91 @@ export function showResult(content, type) {
     `;
 }
 
+function parseRecommendations(text) {
+    try {
+        // Dividir el texto en líneas y procesar cada recomendación
+        const lines = text.split('\n');
+        const recommendations = [];
+        let currentRec = null;
+
+        for (const line of lines) {
+            // Limpiar la línea de caracteres especiales y asteriscos
+            const cleanLine = line.replace(/\*/g, '').trim();
+            
+            if (!cleanLine) continue;
+
+            // Detectar nueva recomendación por número o título
+            const titleMatch = cleanLine.match(/^(\d+\.)?\s*([^:]+?)(?:\s*\(|$)/);
+            if (titleMatch) {
+                if (currentRec) {
+                    recommendations.push(currentRec);
+                }
+                currentRec = {
+                    titulo: titleMatch[2].trim(),
+                    descripcion: '',
+                    plataforma: ''
+                };
+                continue;
+            }
+
+            // Si hay una recomendación actual, procesar la línea
+            if (currentRec) {
+                if (cleanLine.toLowerCase().includes('disponible en:')) {
+                    currentRec.plataforma = cleanLine.split(':')[1].trim();
+                } else if (cleanLine.toLowerCase().includes('justificación:')) {
+                    // Ignorar la palabra "Justificación:" y añadir el resto como descripción
+                    const desc = cleanLine.replace(/justificación:/i, '').trim();
+                    if (desc) {
+                        currentRec.descripcion = desc;
+                    }
+                } else if (!cleanLine.match(/^(\d+\.|\*)/)) {
+                    // Si la línea no empieza con número o asterisco, es parte de la descripción
+                    if (currentRec.descripcion) {
+                        currentRec.descripcion += ' ' + cleanLine;
+                    } else {
+                        currentRec.descripcion = cleanLine;
+                    }
+                }
+            }
+        }
+
+        // Añadir la última recomendación
+        if (currentRec) {
+            recommendations.push(currentRec);
+        }
+
+        console.log('Recomendaciones parseadas:', recommendations);
+        return recommendations;
+    } catch (error) {
+        console.error('Error al parsear recomendaciones:', error);
+        return [];
+    }
+}
+
 export async function showGeminiRecommendations(recommendations, query) {
     const resultadoDiv = document.getElementById('resultado');
     resultadoDiv.innerHTML = '';
 
-    // Crear el título de las recomendaciones
-    const titleElement = document.createElement('h2');
-    titleElement.textContent = `Recomendaciones basadas en "${query}"`;
-    titleElement.style.color = '#e50914';
-    titleElement.style.marginBottom = '20px';
-    resultadoDiv.appendChild(titleElement);
-
     try {
+        console.log('Recomendaciones recibidas:', recommendations);
+
+        // Crear el título de las recomendaciones
+        const titleElement = document.createElement('h2');
+        titleElement.textContent = `Recomendaciones basadas en "${query}"`;
+        titleElement.style.color = '#e50914';
+        titleElement.style.marginBottom = '20px';
+        resultadoDiv.appendChild(titleElement);
+
         // Parsear las recomendaciones si vienen como string
         const recommendationsList = typeof recommendations === 'string' 
             ? parseRecommendations(recommendations)
             : recommendations;
+
+        if (!recommendationsList || recommendationsList.length === 0) {
+            throw new Error('No se pudieron procesar las recomendaciones');
+        }
+
+        console.log('Lista de recomendaciones procesada:', recommendationsList);
 
         // Crear contenedor para las tarjetas
         const cardsContainer = document.createElement('div');
@@ -168,6 +237,8 @@ export async function showGeminiRecommendations(recommendations, query) {
 
         // Procesar cada recomendación
         for (const [index, rec] of recommendationsList.entries()) {
+            console.log(`Procesando recomendación ${index + 1}:`, rec);
+
             const card = document.createElement('div');
             card.className = 'recommendation-card';
             card.style.backgroundColor = '#2a2a2a';
@@ -202,6 +273,7 @@ export async function showGeminiRecommendations(recommendations, query) {
                     const img = card.querySelector('img');
                     img.src = imageUrl;
                     img.onerror = () => {
+                        console.log(`Error al cargar imagen para: ${rec.titulo}`);
                         img.src = placeholderUrl;
                     };
                 }
@@ -214,50 +286,6 @@ export async function showGeminiRecommendations(recommendations, query) {
     } catch (error) {
         console.error('Error al mostrar recomendaciones:', error);
         showError('Error al mostrar las recomendaciones. Por favor, intenta de nuevo.');
-    }
-}
-
-function parseRecommendations(text) {
-    try {
-        // Dividir el texto en líneas y procesar cada recomendación
-        const lines = text.split('\n');
-        const recommendations = [];
-        let currentRec = null;
-
-        for (const line of lines) {
-            // Detectar nueva recomendación por número
-            const titleMatch = line.match(/^\d+\.\s+(.+)/);
-            if (titleMatch) {
-                if (currentRec) {
-                    recommendations.push(currentRec);
-                }
-                currentRec = {
-                    titulo: titleMatch[1].trim(),
-                    descripcion: '',
-                    plataforma: ''
-                };
-                continue;
-            }
-
-            // Si hay una recomendación actual, agregar descripción
-            if (currentRec) {
-                if (line.toLowerCase().includes('disponible en:')) {
-                    currentRec.plataforma = line.split(':')[1].trim();
-                } else if (line.trim()) {
-                    currentRec.descripcion += (currentRec.descripcion ? ' ' : '') + line.trim();
-                }
-            }
-        }
-
-        // Añadir la última recomendación
-        if (currentRec) {
-            recommendations.push(currentRec);
-        }
-
-        return recommendations;
-    } catch (error) {
-        console.error('Error al parsear recomendaciones:', error);
-        return [];
     }
 }
 

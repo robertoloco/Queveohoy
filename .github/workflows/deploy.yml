@@ -22,9 +22,9 @@ jobs:
       - name: Create build directory
         run: |
           echo "🏗️ Creando estructura de directorios..."
-          mkdir -p js
-          mkdir -p css
-          mkdir -p images
+          mkdir -p _site/js
+          mkdir -p _site/css
+          mkdir -p _site/images
           
       - name: Create env.js file
         env:
@@ -48,7 +48,7 @@ jobs:
           fi
           
           echo "📝 Creando env.js..."
-          cat > js/env.js << EOF
+          cat > _site/js/env.js << EOF
           // API Keys configuration
           window.TMDB_API_KEY = '${TMDB_KEY}';
           window.GEMINI_API_KEY = '${GEMINI_KEY}';
@@ -56,10 +56,23 @@ jobs:
           console.log('🔑 API keys cargadas correctamente');
           EOF
           
-          echo "✅ env.js creado en js/"
+          echo "✅ env.js creado en _site/js/"
+
+      - name: Copy files
+        run: |
+          echo "📂 Copiando archivos..."
+          cp -r css/* _site/css/ || echo "No hay archivos CSS"
+          cp -r js/* _site/js/ || echo "No hay archivos JS"
+          cp -r images/* _site/images/ || echo "No hay imágenes"
+          cp index.html _site/ || echo "No se encontró index.html"
+          
+          echo "📁 Contenido de _site:"
+          ls -la _site/
+          echo "📁 Contenido de _site/js:"
+          ls -la _site/js/
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: .
-          branch: main 
+          folder: _site
+          branch: gh-pages 
