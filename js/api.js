@@ -145,19 +145,20 @@ class APIClient {
                 params['with_genres'] = genreId;
             }
 
-            // Si hay plataformas seleccionadas, filtrar por ellas
-            if (platforms && platforms.length > 0) {
-                const platformIds = platforms
-                    .map(platform => PROVIDER_MAP[platform])
-                    .filter(id => id !== undefined);
+            // Si no hay plataformas seleccionadas, usar todas las disponibles
+            const platformsToUse = platforms.length > 0 ? platforms : Object.keys(PROVIDER_MAP);
+            
+            // Convertir nombres de plataformas a IDs
+            const platformIds = platformsToUse
+                .map(platform => PROVIDER_MAP[platform])
+                .filter(id => id !== undefined);
 
-                if (platformIds.length > 0) {
-                    params['with_watch_providers'] = platformIds.join('|');
-                }
+            if (platformIds.length > 0) {
+                params['with_watch_providers'] = platformIds.join('|');
             }
             
             console.log('Iniciando búsqueda con:', {
-                plataformas: platforms,
+                plataformas: platformsToUse,
                 tipo: type,
                 genero: genreId
             });

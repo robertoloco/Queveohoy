@@ -115,23 +115,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Función para buscar contenido basado en referencia
-    const buscarPorReferencia = async () => {
+    // Event listener para el botón sorpresa
+    botonSorpresa.addEventListener('click', async () => {
+        try {
+            showLoading();
+            
+            const selectedPlatforms = getPlataformasSeleccionadas();
+            const type = btnPelicula.classList.contains('active') ? 'movie' : 'tv';
+            const genre = genreSelect.value;
+
+            console.log('Iniciando búsqueda con:', {
+                plataformas: selectedPlatforms.length > 0 ? selectedPlatforms : 'todas',
+                tipo: type,
+                genero: genre || 'cualquiera'
+            });
+            
+            const content = await apiClient.getRandomContent(type, selectedPlatforms, genre);
+            
+            if (!content) {
+                throw new Error('No se encontró ningún contenido. Por favor, intenta con otros filtros.');
+            }
+            
+            showResult(content, type);
+        } catch (error) {
+            console.error('Error detallado:', error);
+            let errorMessage = error.message;
+            
+            // Personalizar mensajes de error comunes
+            if (error.code === 'AUTH_ERROR') {
+                errorMessage = 'Error de autenticación con la API. Por favor, contacta al administrador.';
+            } else if (error.code === 'NETWORK_ERROR') {
+                errorMessage = 'Error de conexión. Por favor, verifica tu conexión a internet.';
+            }
+            
+            showError(errorMessage);
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Event listener para el botón de buscar por referencia
+    buscarReferencia.addEventListener('click', async () => {
         const referencia = referenciaInput.value.trim();
         if (!referencia) {
             showError('Por favor, ingresa un director o contenido de referencia.');
             return;
         }
 
-        showLoading();
-
         try {
+            showLoading();
+            
             const tipo = btnPelicula.classList.contains('active') ? 'movie' : 'tv';
             const plataformas = getNombresPlataformasSeleccionadas();
             const genero = getNombreGeneroSeleccionado();
 
-            const recommendationsText = await geminiAPI.getRecommendations(referencia, tipo, plataformas, genero);
-            hideLoading();
+            const recommendationsText = await geminiAPI.getRecommendations(
+                referencia, 
+                tipo, 
+                plataformas.length > 0 ? plataformas : Object.keys(PROVIDER_MAP),
+                genero
+            );
             
             if (recommendationsText && typeof recommendationsText === 'string') {
                 showGeminiRecommendations(recommendationsText, referencia);
@@ -139,49 +182,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('No se recibió una respuesta válida de la API');
             }
         } catch (error) {
-            hideLoading();
-            showError('No se pudo obtener recomendaciones basadas en tu referencia. Por favor, intenta con otra referencia.');
             console.error('Error al buscar por referencia:', error);
-        }
-    };
-
-    // Event listener para el botón sorpresa
-    botonSorpresa.addEventListener('click', async () => {
-        try {
-            const selectedPlatforms = getPlataformasSeleccionadas();
-            
-            if (selectedPlatforms.length === 0) {
-                throw new Error('Por favor, selecciona al menos una plataforma de streaming.');
-            }
-
-            showLoading();
-            
-            const type = btnPelicula.classList.contains('active') ? 'movie' : 'tv';
-            const genre = genreSelect.value;
-
-            console.log('Iniciando búsqueda con:', {
-                plataformas: selectedPlatforms,
-                tipo: type,
-                genero: genre
-            });
-            
-            const content = await apiClient.getRandomContent(type, selectedPlatforms, genre);
-            showResult(content, type);
-        } catch (error) {
-            console.error('Error detallado:', error);
-            showError(error.message || 'Error al obtener contenido. Por favor, intenta de nuevo.');
+            showError('No se pudo obtener recomendaciones. Por favor, intenta con otra referencia.');
         } finally {
             hideLoading();
         }
     });
 
-    // Event listener para el botón de buscar por referencia
-    buscarReferencia.addEventListener('click', buscarPorReferencia);
-
     // Event listener para permitir presionar Enter en el campo de referencia
     referenciaInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            buscarPorReferencia();
+            buscarReferencia();
         }
     });
 
