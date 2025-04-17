@@ -233,248 +233,162 @@ export function showResult(content, type) {
     document.head.appendChild(style);
 }
 
-function parseRecommendations(text) {
+const PLACEHOLDER_IMAGE = 'img/placeholder.svg';
+
+async function loadImage(url) {
     try {
-        // Dividir el texto en líneas y procesar cada recomendación
-        const lines = text.split('\n');
-        const recommendations = [];
-        let currentRec = null;
-
-        for (const line of lines) {
-            // Limpiar la línea de caracteres especiales y asteriscos
-            const cleanLine = line.replace(/\*/g, '').trim();
-            
-            if (!cleanLine) continue;
-
-            // Detectar nueva recomendación por número o título
-            const titleMatch = cleanLine.match(/^(\d+\.)?\s*([^:]+?)(?:\s*\(|$)/);
-            if (titleMatch) {
-                if (currentRec) {
-                    recommendations.push(currentRec);
-                }
-                currentRec = {
-                    titulo: titleMatch[2].trim(),
-                    descripcion: '',
-                    plataforma: ''
-                };
-                continue;
-            }
-
-            // Si hay una recomendación actual, procesar la línea
-            if (currentRec) {
-                if (cleanLine.toLowerCase().includes('disponible en:')) {
-                    currentRec.plataforma = cleanLine.split(':')[1].trim();
-                } else if (cleanLine.toLowerCase().includes('justificación:')) {
-                    // Ignorar la palabra "Justificación:" y añadir el resto como descripción
-                    const desc = cleanLine.replace(/justificación:/i, '').trim();
-                    if (desc) {
-                        currentRec.descripcion = desc;
-                    }
-                } else if (!cleanLine.match(/^(\d+\.|\*)/)) {
-                    // Si la línea no empieza con número o asterisco, es parte de la descripción
-                    if (currentRec.descripcion) {
-                        currentRec.descripcion += ' ' + cleanLine;
-                    } else {
-                        currentRec.descripcion = cleanLine;
-                    }
-                }
-            }
-        }
-
-        // Añadir la última recomendación
-        if (currentRec) {
-            recommendations.push(currentRec);
-        }
-
-        console.log('Recomendaciones parseadas:', recommendations);
-        return recommendations;
+        const img = new Image();
+        const promise = new Promise((resolve, reject) => {
+            img.onload = () => resolve(url);
+            img.onerror = () => reject(new Error(`Error cargando imagen: ${url}`));
+        });
+        img.src = url;
+        return await promise;
     } catch (error) {
-        console.error('Error al parsear recomendaciones:', error);
-        return [];
+        console.error('Error cargando imagen:', error);
+        return PLACEHOLDER_IMAGE;
     }
 }
 
-async function loadImage(url, title) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(url);
-        img.onerror = () => {
-            console.warn(`Error al cargar imagen para: ${title}`);
-            resolve(null);
-        };
-        img.src = url;
-    });
+async function getThumbnailUrl(content) {
+    try {
+        if (!content.poster_path && !content.backdrop_path) {
+            throw new Error('No hay imagen disponible');
+        }
+        const basePath = 'https://image.tmdb.org/t/p/w500';
+        const imagePath = content.poster_path || content.backdrop_path;
+        return await loadImage(`${basePath}${imagePath}`);
+    } catch (error) {
+        console.warn('Error obteniendo thumbnail:', error);
+        return PLACEHOLDER_IMAGE;
+    }
 }
 
-export async function showGeminiRecommendations(recommendations, query) {
-    const resultadoDiv = document.getElementById('resultado');
-    resultadoDiv.innerHTML = '';
+async function showGeminiRecommendations(recommendations, query) {
+    const container = document.getElementById('recommendations');
+    container.innerHTML = '';
+
+    const title = document.createElement('h2');
+    title.textContent = `Recomendaciones basadas en "${query}"`;
+    container.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'recommendations-grid';
 
     try {
-        // Crear el título de las recomendaciones
-        const titleElement = document.createElement('h2');
-        titleElement.textContent = `Recomendaciones basadas en "${query}"`;
-        titleElement.style.color = '#e50914';
-        titleElement.style.marginBottom = '20px';
-        resultadoDiv.appendChild(titleElement);
-
-        // Parsear las recomendaciones si vienen como string
-        const recommendationsList = typeof recommendations === 'string' 
-            ? parseRecommendations(recommendations)
+        const parsedRecommendations = typeof recommendations === 'string' 
+            ? parseRecommendations(recommendations) 
             : recommendations;
 
-        if (!recommendationsList || recommendationsList.length === 0) {
+        if (!parsedRecommendations || parsedRecommendations.length === 0) {
             throw new Error('No se pudieron procesar las recomendaciones');
         }
 
-        // Crear contenedor para las tarjetas
-        const cardsContainer = document.createElement('div');
-        cardsContainer.style.display = 'grid';
-        cardsContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-        cardsContainer.style.gap = '30px';
-        cardsContainer.style.padding = '20px 0';
-
-        // Procesar cada recomendación
-        for (const [index, rec] of recommendationsList.entries()) {
+        for (const rec of parsedRecommendations) {
             const card = document.createElement('div');
             card.className = 'recommendation-card';
-            card.style.backgroundColor = '#2a2a2a';
-            card.style.borderRadius = '12px';
-            card.style.overflow = 'hidden';
-            card.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-            card.style.height = '100%';
-            card.style.display = 'flex';
-            card.style.flexDirection = 'column';
 
-            // Crear placeholder mientras se carga la imagen
-            const placeholderUrl = `https://via.placeholder.com/500x750/1a1a1a/ffffff?text=${encodeURIComponent(rec.titulo || 'Cargando...')}`;
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'recommendation-image';
             
-            // Contenido inicial de la tarjeta con placeholder
-            card.innerHTML = `
-                <div class="card-image" style="
-                    position: relative;
-                    padding-top: 150%;
-                    background: #1a1a1a;
-                    overflow: hidden;
-                ">
-                    <img src="${placeholderUrl}" 
-                         alt="${rec.titulo}"
-                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
-                         loading="lazy">
-                </div>
-                <div style="
-                    padding: 20px;
-                    flex-grow: 1;
-                    display: flex;
-                    flex-direction: column;
-                ">
-                    <h3 style="
-                        color: #fff;
-                        margin: 0 0 15px 0;
-                        font-size: 1.3em;
-                        line-height: 1.4;
-                    ">
-                        <a href="https://www.themoviedb.org/search?query=${encodeURIComponent(rec.titulo)}"
-                           target="_blank"
-                           style="
-                               color: inherit;
-                               text-decoration: none;
-                               transition: color 0.2s ease;
-                           "
-                           onmouseover="this.style.color='#e50914'"
-                           onmouseout="this.style.color='inherit'"
-                        >${index + 1}. ${rec.titulo}</a>
-                    </h3>
-                    <div style="flex-grow: 1;">
-                        <p style="
-                            color: #ccc;
-                            margin: 0;
-                            font-size: 0.95em;
-                            line-height: 1.6;
-                        ">${rec.descripcion || ''}</p>
-                    </div>
-                    ${rec.plataforma ? `
-                        <div style="
-                            margin-top: 25px;
-                            padding: 15px;
-                            background: rgba(229, 9, 20, 0.1);
-                            border-radius: 8px;
-                            border: 1px solid rgba(229, 9, 20, 0.2);
-                        ">
-                            <p style="
-                                color: #fff;
-                                margin: 0 0 10px 0;
-                                font-size: 0.9em;
-                                opacity: 0.9;
-                            ">Disponible en:</p>
-                            <div style="
-                                display: inline-flex;
-                                align-items: center;
-                                background: #e50914;
-                                color: white;
-                                padding: 8px 12px;
-                                border-radius: 6px;
-                                font-size: 0.9em;
-                                font-weight: 500;
-                                box-shadow: 0 2px 4px rgba(229, 9, 20, 0.2);
-                            ">
-                                <span style="margin-right: 8px;">📺</span>
-                                <span>${rec.plataforma}</span>
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
+            // Mostrar placeholder mientras carga
+            const img = document.createElement('img');
+            img.src = PLACEHOLDER_IMAGE;
+            img.alt = rec.title;
+            imgContainer.appendChild(img);
 
-            cardsContainer.appendChild(card);
+            const content = document.createElement('div');
+            content.className = 'recommendation-content';
 
-            // Intentar cargar la imagen de TMDB
-            try {
-                const imageUrl = await searchContentImage(rec.titulo);
-                if (imageUrl) {
-                    const img = card.querySelector('img');
-                    img.src = imageUrl;
-                    img.onerror = () => {
-                        console.log(`Error al cargar imagen para: ${rec.titulo}`);
-                        img.src = placeholderUrl;
-                    };
-                }
-            } catch (error) {
-                console.warn(`No se pudo cargar la imagen para: ${rec.titulo}`, error);
+            const title = document.createElement('h3');
+            title.textContent = rec.title;
+
+            const description = document.createElement('p');
+            description.textContent = rec.description;
+
+            const platforms = document.createElement('div');
+            platforms.className = 'platforms';
+            if (rec.platforms && rec.platforms.length > 0) {
+                rec.platforms.forEach(platform => {
+                    const icon = document.createElement('img');
+                    icon.className = 'platform-icon';
+                    icon.src = `img/platforms/${platform.toLowerCase()}.png`;
+                    icon.alt = platform;
+                    icon.title = platform;
+                    platforms.appendChild(icon);
+                });
+            }
+
+            content.appendChild(title);
+            content.appendChild(description);
+            content.appendChild(platforms);
+
+            card.appendChild(imgContainer);
+            card.appendChild(content);
+            grid.appendChild(card);
+
+            // Intentar cargar la imagen real
+            if (rec.image) {
+                const imageUrl = await getThumbnailUrl(rec.image);
+                img.src = imageUrl;
             }
         }
 
-        resultadoDiv.appendChild(cardsContainer);
-
-        // Añadir media queries para móvil
-        const style = document.createElement('style');
-        style.textContent = `
-            @media (max-width: 768px) {
-                .recommendation-card {
-                    max-width: 100%;
-                    margin: 0 auto;
-                }
-                .card-image {
-                    padding-top: 40% !important;
-                }
-                .recommendation-card > div:last-child {
-                    padding: 15px !important;
-                }
-                .recommendation-card h3 {
-                    font-size: 1.2em !important;
-                    margin-bottom: 10px !important;
-                }
-                .recommendation-card p {
-                    font-size: 0.9em !important;
-                    margin-bottom: 15px !important;
-                }
-            }
-        `;
-        document.head.appendChild(style);
+        container.appendChild(grid);
     } catch (error) {
-        console.error('Error al mostrar recomendaciones:', error);
-        showError('Error al mostrar las recomendaciones. Por favor, intenta de nuevo.');
+        console.error('Error mostrando recomendaciones:', error);
+        container.innerHTML = `<p class="error">Error mostrando recomendaciones: ${error.message}</p>`;
     }
+}
+
+function parseRecommendations(text) {
+    console.log('Parseando recomendaciones:', text);
+    const lines = text.split('\n').map(line => line.trim());
+    const recommendations = [];
+    let currentRec = null;
+
+    for (const line of lines) {
+        if (!line) continue;
+
+        // Limpiar caracteres especiales y asteriscos
+        const cleanLine = line.replace(/[*]/g, '').trim();
+
+        // Detectar nueva recomendación por número o título
+        if (/^\d+\./.test(cleanLine) || /^título:/i.test(cleanLine)) {
+            if (currentRec) {
+                recommendations.push(currentRec);
+            }
+            currentRec = {
+                title: cleanLine.replace(/^\d+\.\s*|^título:\s*/i, ''),
+                description: '',
+                platforms: []
+            };
+        } else if (currentRec) {
+            // Detectar plataformas
+            if (/disponible en:/i.test(cleanLine)) {
+                const platformText = cleanLine.replace(/^disponible en:\s*/i, '');
+                currentRec.platforms = platformText.split(/[,\sy]+/)
+                    .map(p => p.trim())
+                    .filter(p => p && p.length > 0);
+            }
+            // Detectar descripción/justificación
+            else if (/justificación:/i.test(cleanLine)) {
+                currentRec.description = cleanLine.replace(/^justificación:\s*/i, '');
+            }
+            // Agregar a la descripción si no es una línea especial
+            else if (!currentRec.description) {
+                currentRec.description = cleanLine;
+            }
+        }
+    }
+
+    // Agregar la última recomendación
+    if (currentRec) {
+        recommendations.push(currentRec);
+    }
+
+    console.log('Recomendaciones parseadas:', recommendations);
+    return recommendations;
 }
 
 // Función para generar plataformas aleatorias para la demo
@@ -496,4 +410,77 @@ function getRandomPlatforms() {
     console.log('Plataformas seleccionadas:', selectedPlatforms);
     
     return selectedPlatforms;
-} 
+}
+
+// Añadir estos estilos al final del archivo
+const styles = `
+.recommendation-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 16px;
+    margin: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.recommendation-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.recommendation-title {
+    font-size: 1.2em;
+    margin: 0 0 12px 0;
+    color: #2c3e50;
+}
+
+.recommendation-description {
+    flex: 1;
+    margin: 0 0 16px 0;
+    color: #34495e;
+    line-height: 1.5;
+}
+
+.platform-section {
+    margin-top: auto;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.platform-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-right: 8px;
+}
+
+.platform-value {
+    color: #2c3e50;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .recommendation-card {
+        margin: 8px 0;
+    }
+    
+    .platform-section {
+        padding: 8px;
+        margin-top: 12px;
+    }
+}
+`;
+
+// Inyectar los estilos
+const styleSheet = document.createElement('style');
+styleSheet.textContent = styles;
+document.head.appendChild(styleSheet); 
