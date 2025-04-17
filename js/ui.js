@@ -49,14 +49,20 @@ export function showResult(content, type) {
         }
     }
     
-    // Obtener el director
+    // Obtener el director y su ID
     let director = 'No disponible';
+    let directorId = null;
     if (content.credits && content.credits.crew) {
         const directorInfo = content.credits.crew.find(person => person.job === 'Director');
         if (directorInfo) {
             director = directorInfo.name;
+            directorId = directorInfo.id;
         }
     }
+
+    // Crear enlaces a TMDB
+    const tmdbUrl = `https://www.themoviedb.org/${type}/${content.id}`;
+    const directorUrl = directorId ? `https://www.themoviedb.org/person/${directorId}` : null;
     
     // Obtener los géneros
     const genres = content.genres 
@@ -131,7 +137,18 @@ export function showResult(content, type) {
                     color: #fff;
                     margin: 0 0 15px 0;
                     font-size: 1.8em;
-                ">${content.title || content.name}</h2>
+                ">
+                    <a href="${tmdbUrl}" 
+                       target="_blank" 
+                       style="
+                           color: inherit;
+                           text-decoration: none;
+                           transition: color 0.2s ease;
+                       "
+                       onmouseover="this.style.color='#e50914'"
+                       onmouseout="this.style.color='inherit'"
+                    >${content.title || content.name}</a>
+                </h2>
                 
                 <div style="
                     display: flex;
@@ -154,7 +171,22 @@ export function showResult(content, type) {
 
                 <div style="margin-bottom: 20px;">
                     <p style="margin: 10px 0; color: #fff;"><strong>Género:</strong> <span style="color: #ccc;">${genres}</span></p>
-                    <p style="margin: 10px 0; color: #fff;"><strong>Director:</strong> <span style="color: #ccc;">${director}</span></p>
+                    <p style="margin: 10px 0; color: #fff;">
+                        <strong>Director:</strong> 
+                        ${directorUrl 
+                            ? `<a href="${directorUrl}" 
+                                 target="_blank" 
+                                 style="
+                                     color: #ccc;
+                                     text-decoration: none;
+                                     transition: color 0.2s ease;
+                                 "
+                                 onmouseover="this.style.color='#e50914'"
+                                 onmouseout="this.style.color='#ccc'"
+                               >${director}</a>`
+                            : `<span style="color: #ccc;">${director}</span>`
+                        }
+                    </p>
                 </div>
 
                 <div style="margin-top: auto;">
@@ -341,7 +373,18 @@ export async function showGeminiRecommendations(recommendations, query) {
                         margin: 0 0 15px 0;
                         font-size: 1.3em;
                         line-height: 1.4;
-                    ">${index + 1}. ${rec.titulo}</h3>
+                    ">
+                        <a href="https://www.themoviedb.org/search?query=${encodeURIComponent(rec.titulo)}"
+                           target="_blank"
+                           style="
+                               color: inherit;
+                               text-decoration: none;
+                               transition: color 0.2s ease;
+                           "
+                           onmouseover="this.style.color='#e50914'"
+                           onmouseout="this.style.color='inherit'"
+                        >${index + 1}. ${rec.titulo}</a>
+                    </h3>
                     <div style="flex-grow: 1;">
                         <p style="
                             color: #ccc;
