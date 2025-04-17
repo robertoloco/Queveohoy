@@ -39,13 +39,16 @@ jobs:
           mkdir -p _site/js
           mkdir -p _site/css
           mkdir -p _site/images
-          ls -la _site
+          echo "Directorios creados:"
+          ls -la _site/
 
       - name: Create env.js file
         env:
           TMDB_KEY: ${{ secrets.TMDB_API_KEY }}
           GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          echo "Creando env.js..."
+          
           # Verificar que las claves existen
           if [ -z "$TMDB_KEY" ]; then
             echo "❌ Error: TMDB_API_KEY no está configurada"
@@ -58,50 +61,26 @@ jobs:
           fi
           
           # Crear el archivo env.js
-          cat > _site/js/env.js << 'EOF'
+          cat > _site/js/env.js << EOF
           // API Keys configuration
-          window.TMDB_API_KEY = '$TMDB_KEY';
-          window.GEMINI_API_KEY = '$GEMINI_KEY';
+          window.TMDB_API_KEY = "$TMDB_KEY";
+          window.GEMINI_API_KEY = "$GEMINI_KEY";
           
-          // Log para verificar que las keys están presentes
-          console.log('API keys loaded:', {
-              TMDB: window.TMDB_API_KEY ? 'Present' : 'Missing',
-              GEMINI: window.GEMINI_API_KEY ? 'Present' : 'Missing'
-          });
+          console.log('🔑 API keys cargadas');
           EOF
           
-          # Verificar que el archivo se creó y tiene contenido
-          if [ -s "_site/js/env.js" ]; then
-            echo "✅ env.js creado correctamente"
-            echo "Tamaño del archivo: $(wc -c < _site/js/env.js) bytes"
-          else
-            echo "❌ Error: env.js no se creó o está vacío"
-            exit 1
-          fi
+          echo "✅ env.js creado en _site/js/"
+          ls -la _site/js/
 
       - name: Copy static files
         run: |
-          # Copiar archivos estáticos
-          cp -r css/* _site/css/ || echo "No CSS files to copy"
-          cp -r js/* _site/js/ || echo "No JS files to copy"
-          cp -r images/* _site/images/ || echo "No image files to copy"
-          cp index.html _site/ || echo "No index.html to copy"
+          echo "Copiando archivos estáticos..."
+          cp -r css/* _site/css/ || echo "No hay archivos CSS para copiar"
+          cp -r js/* _site/js/ || echo "No hay archivos JS para copiar"
+          cp -r images/* _site/images/ || echo "No hay imágenes para copiar"
+          cp index.html _site/ || echo "No se encontró index.html"
           
-          # Sobrescribir env.js con la versión correcta
-          cat > _site/js/env.js << EOF
-          // API Keys configuration
-          window.TMDB_API_KEY = '$TMDB_KEY';
-          window.GEMINI_API_KEY = '$GEMINI_KEY';
-          
-          // Log para verificar que las keys están presentes
-          console.log('API keys loaded:', {
-              TMDB: window.TMDB_API_KEY ? 'Present' : 'Missing',
-              GEMINI: window.GEMINI_API_KEY ? 'Present' : 'Missing'
-          });
-          EOF
-          
-          # Verificar la estructura final
-          echo "Contenido del directorio _site:"
+          echo "Contenido final de _site:"
           ls -la _site/
           echo "Contenido de _site/js:"
           ls -la _site/js/
