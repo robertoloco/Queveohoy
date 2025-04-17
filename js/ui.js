@@ -94,7 +94,7 @@ export function showResult(content, type) {
     let platformsIcons = '';
     if (platformsList.length > 0) {
         platformsIcons = `
-            <div class="platforms-icons">
+            <div class="platforms-icons" style="margin-top: 20px;">
                 ${platformsList.map(platform => {
                     // Buscar la plataforma en el mapa de proveedores
                     const platformKey = Object.keys(PROVIDER_MAP).find(key => 
@@ -115,23 +115,71 @@ export function showResult(content, type) {
     const directorUrl = directorId ? `https://www.themoviedb.org/person/${directorId}` : '#';
     
     resultado.innerHTML = `
-        <div class="content-card netflix-style">
-            <a href="${tmdbUrl}" target="_blank" class="content-link">
-                <div class="content-poster-container">
-                    <img src="${imageUrl}" alt="${content.title || content.name}" class="content-poster">
-                    <div class="content-overlay">
-                        <div class="content-details">
-                            <h2>${content.title || content.name}</h2>
-                            <div class="content-metadata">
-                                <span class="content-rating">⭐ ${content.vote_average?.toFixed(1) || 'N/A'}</span>
-                                <span class="content-year">${year}</span>
+        <div class="recommendation-card netflix-style" style="
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            max-width: 100%;
+            margin: 0 auto;
+        ">
+            <a href="${tmdbUrl}" target="_blank" class="content-link" style="text-decoration: none; color: inherit;">
+                <div class="content-poster-container" style="position: relative; padding-top: 150%;">
+                    <img src="${imageUrl}" alt="${content.title || content.name}" style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    ">
+                    <div class="content-overlay" style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.8);
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <div class="content-details" style="padding: 20px; color: white;">
+                            <h2 style="margin: 0 0 15px 0; font-size: 1.5em;">${content.title || content.name}</h2>
+                            <div class="content-metadata" style="margin-bottom: 15px;">
+                                <span class="content-rating" style="margin-right: 15px;">⭐ ${content.vote_average?.toFixed(1) || 'N/A'}</span>
+                                <span class="content-year" style="margin-right: 15px;">${year}</span>
                                 ${durationInfo ? `<span class="content-duration">${durationInfo}</span>` : ''}
                             </div>
-                            <p class="content-overview">${content.overview || 'No hay descripción disponible.'}</p>
-                            <div class="content-additional-info">
-                                <p><strong>Género:</strong> ${genres}</p>
-                                <p><strong>Director:</strong> <a href="${directorUrl}" target="_blank" class="director-link">${director}</a></p>
-                                <p><strong>Plataformas:</strong> ${platforms}</p>
+                            <p class="content-overview" style="
+                                margin: 0 0 20px 0;
+                                font-size: 1em;
+                                line-height: 1.5;
+                                display: -webkit-box;
+                                -webkit-line-clamp: 4;
+                                -webkit-box-orient: vertical;
+                                overflow: hidden;
+                            ">${content.overview || 'No hay descripción disponible.'}</p>
+                            <div class="content-additional-info" style="margin-bottom: 20px;">
+                                <p style="margin: 10px 0;"><strong>Género:</strong> ${genres}</p>
+                                <p style="margin: 10px 0;"><strong>Director:</strong> <span class="director-link" style="color: #e50914;">${director}</span></p>
+                                <p style="margin: 10px 0;"><strong>Plataformas:</strong></p>
+                                <div style="
+                                    margin-top: 15px;
+                                    padding: 12px 16px;
+                                    background: #e50914;
+                                    color: white;
+                                    display: inline-block;
+                                    border-radius: 8px;
+                                    font-weight: 500;
+                                    box-shadow: 0 2px 4px rgba(229, 9, 20, 0.2);
+                                ">
+                                    📺 ${platforms}
+                                </div>
                             </div>
                             ${platformsIcons}
                         </div>
@@ -140,6 +188,43 @@ export function showResult(content, type) {
             </a>
         </div>
     `;
+
+    // Añadir efectos hover
+    const card = resultado.querySelector('.recommendation-card');
+    const overlay = resultado.querySelector('.content-overlay');
+
+    card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-5px)';
+        card.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.3)';
+        overlay.style.opacity = '1';
+    });
+
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.2)';
+        overlay.style.opacity = '0';
+    });
+
+    // Añadir media queries para móvil
+    const style = document.createElement('style');
+    style.textContent = `
+        @media (max-width: 768px) {
+            .recommendation-card {
+                width: 100% !important;
+                margin: 0 auto !important;
+            }
+            .content-details {
+                padding: 15px !important;
+            }
+            .content-overview {
+                -webkit-line-clamp: 3 !important;
+            }
+            .platforms-icons {
+                flex-wrap: wrap;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 function parseRecommendations(text) {
