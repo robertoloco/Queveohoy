@@ -203,6 +203,18 @@ function parseRecommendations(text) {
     }
 }
 
+async function loadImage(url, title) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(url);
+        img.onerror = () => {
+            console.warn(`Error al cargar imagen para: ${title}`);
+            resolve(null);
+        };
+        img.src = url;
+    });
+}
+
 export async function showGeminiRecommendations(recommendations, query) {
     const resultadoDiv = document.getElementById('resultado');
     resultadoDiv.innerHTML = '';
@@ -247,9 +259,9 @@ export async function showGeminiRecommendations(recommendations, query) {
             card.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
 
             // Crear placeholder mientras se carga la imagen
-            const placeholderUrl = `https://via.placeholder.com/500x750?text=${encodeURIComponent(rec.titulo || 'Cargando...')}`;
+            const placeholderUrl = `https://via.placeholder.com/500x750/1a1a1a/ffffff?text=${encodeURIComponent(rec.titulo || 'Cargando...')}`;
             
-            // Contenido de la tarjeta
+            // Contenido inicial de la tarjeta con placeholder
             card.innerHTML = `
                 <div class="card-image" style="position: relative; padding-top: 150%; background: #1a1a1a;">
                     <img src="${placeholderUrl}" 
@@ -270,12 +282,17 @@ export async function showGeminiRecommendations(recommendations, query) {
             try {
                 const imageUrl = await searchContentImage(rec.titulo);
                 if (imageUrl) {
-                    const img = card.querySelector('img');
-                    img.src = imageUrl;
-                    img.onerror = () => {
-                        console.log(`Error al cargar imagen para: ${rec.titulo}`);
-                        img.src = placeholderUrl;
-                    };
+                    // Verificar que la imagen se puede cargar
+                    const validImageUrl = await loadImage(imageUrl, rec.titulo);
+                    if (validImageUrl) {
+                        const img = card.querySelector('img');
+                        img.src = validImageUrl;
+                        // Mantener el placeholder como respaldo
+                        img.onerror = () => {
+                            console.log(`Error al cargar imagen para: ${rec.titulo}`);
+                            img.src = placeholderUrl;
+                        };
+                    }
                 }
             } catch (error) {
                 console.warn(`No se pudo cargar la imagen para: ${rec.titulo}`, error);
