@@ -396,20 +396,30 @@ export async function showGeminiRecommendations(recommendations, query) {
                     ${rec.plataforma ? `
                         <div style="
                             margin-top: 25px;
-                            padding-top: 20px;
-                            border-top: 1px solid rgba(255, 255, 255, 0.1);
+                            padding: 15px;
+                            background: rgba(229, 9, 20, 0.1);
+                            border-radius: 8px;
+                            border: 1px solid rgba(229, 9, 20, 0.2);
                         ">
+                            <p style="
+                                color: #fff;
+                                margin: 0 0 10px 0;
+                                font-size: 0.9em;
+                                opacity: 0.9;
+                            ">Disponible en:</p>
                             <div style="
-                                padding: 10px 15px;
+                                display: inline-flex;
+                                align-items: center;
                                 background: #e50914;
                                 color: white;
-                                display: inline-block;
+                                padding: 8px 12px;
                                 border-radius: 6px;
                                 font-size: 0.9em;
                                 font-weight: 500;
                                 box-shadow: 0 2px 4px rgba(229, 9, 20, 0.2);
                             ">
-                                📺 Disponible en: ${rec.plataforma}
+                                <span style="margin-right: 8px;">📺</span>
+                                <span>${rec.plataforma}</span>
                             </div>
                         </div>
                     ` : ''}
