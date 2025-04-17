@@ -9,8 +9,11 @@ export const API_CONFIG = {
         const key = window.TMDB_API_KEY;
         if (!key) {
             console.error('❌ Error: No se encontró la API key de TMDB');
-            document.getElementById('error-message').textContent = 'Error: No se ha encontrado la clave API de TMDB.';
-            document.getElementById('error-message').style.display = 'block';
+            const errorElement = document.getElementById('error-message');
+            if (errorElement) {
+                errorElement.textContent = 'Error: No se ha encontrado la clave API de TMDB.';
+                errorElement.style.display = 'block';
+            }
             return '';
         }
         return key;
@@ -23,8 +26,11 @@ export const API_CONFIG = {
         const key = window.GEMINI_API_KEY;
         if (!key) {
             console.error('❌ Error: No se encontró la API key de Gemini');
-            document.getElementById('error-message').textContent = 'Error: No se ha encontrado la clave API de Gemini.';
-            document.getElementById('error-message').style.display = 'block';
+            const errorElement = document.getElementById('error-message');
+            if (errorElement) {
+                errorElement.textContent = 'Error: No se ha encontrado la clave API de Gemini.';
+                errorElement.style.display = 'block';
+            }
             return '';
         }
         return key;
@@ -60,27 +66,38 @@ export const API_CONFIG = {
             console.log('🔧 Configuración de la API:', config);
             
             if (!config.hasTMDBKey || !config.hasGeminiKey) {
-                document.getElementById('error-message').textContent = 'Error: No se han encontrado todas las claves API necesarias.';
-                document.getElementById('error-message').style.display = 'block';
+                const errorElement = document.getElementById('error-message');
+                if (errorElement) {
+                    errorElement.textContent = 'Error: No se han encontrado todas las claves API necesarias.';
+                    errorElement.style.display = 'block';
+                }
             }
         } catch (error) {
             console.error('❌ Error al verificar la configuración:', error);
-            document.getElementById('error-message').textContent = 'Error al verificar la configuración de la API.';
-            document.getElementById('error-message').style.display = 'block';
+            const errorElement = document.getElementById('error-message');
+            if (errorElement) {
+                errorElement.textContent = 'Error al verificar la configuración de la API.';
+                errorElement.style.display = 'block';
+            }
         }
     }
 };
 
 // Verificar configuración al cargar
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        API_CONFIG.logConfig();
-    } catch (error) {
-        console.error('❌ Error al cargar la configuración:', error);
-        document.getElementById('error-message').textContent = 'Error al cargar la configuración de la aplicación.';
-        document.getElementById('error-message').style.display = 'block';
-    }
-});
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            API_CONFIG.logConfig();
+        } catch (error) {
+            console.error('❌ Error al cargar la configuración:', error);
+            const errorElement = document.getElementById('error-message');
+            if (errorElement) {
+                errorElement.textContent = 'Error al cargar la configuración de la aplicación.';
+                errorElement.style.display = 'block';
+            }
+        }
+    });
+}
 
 // Mapeo de proveedores de streaming
 export const PROVIDER_MAP = {

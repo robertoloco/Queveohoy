@@ -484,3 +484,11 @@ const styles = `
 const styleSheet = document.createElement('style');
 styleSheet.textContent = styles;
 document.head.appendChild(styleSheet); 
+
+export {
+    showLoading,
+    hideLoading,
+    showError,
+    showResult,
+    showGeminiRecommendations
+}; 

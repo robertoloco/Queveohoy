@@ -104,7 +104,9 @@
             ¡Sorpréndeme!
         </button>
 
-        <div id="recommendations-container"></div>
+        <div id="recommendations">
+            <!-- Las recomendaciones de la IA se mostrarán aquí -->
+        </div>
     </div>
 
     <!-- Scripts -->
@@ -112,8 +114,10 @@
         // Manejo de errores de carga de scripts
         window.addEventListener('error', function(e) {
             const errorMessage = document.getElementById('error-message');
-            errorMessage.textContent = 'Error al cargar la aplicación. Por favor, recarga la página.';
-            errorMessage.style.display = 'block';
+            if (errorMessage) {
+                errorMessage.textContent = 'Error al cargar la aplicación. Por favor, recarga la página.';
+                errorMessage.style.display = 'block';
+            }
             console.error('Error de script:', e);
         }, true);
     </script>
