@@ -142,113 +142,123 @@ export function showResult(content, type) {
     `;
 }
 
-export async function showGeminiRecommendations(recommendations, referencia) {
-    const resultado = document.getElementById('resultado');
-    
-    if (!recommendations || typeof recommendations !== 'string' || recommendations.trim() === '') {
-        resultado.innerHTML = `
-            <div class="recommendations-container error">
-                <p>Lo siento, no se encontraron recomendaciones. Por favor, intenta con otra referencia.</p>
-            </div>`;
-        return;
-    }
+export async function showGeminiRecommendations(recommendations, query) {
+    const resultadoDiv = document.getElementById('resultado');
+    resultadoDiv.innerHTML = '';
 
-    // Mostrar mensaje de carga mientras se buscan las imágenes
-    resultado.innerHTML = `
-        <div class="recommendations-container">
-            <p class="loading-message">Buscando información adicional...</p>
-        </div>`;
+    // Crear el título de las recomendaciones
+    const titleElement = document.createElement('h2');
+    titleElement.textContent = `Recomendaciones basadas en "${query}"`;
+    titleElement.style.color = '#e50914';
+    titleElement.style.marginBottom = '20px';
+    resultadoDiv.appendChild(titleElement);
 
-    // Dividir el texto en recomendaciones individuales usando el número como separador
-    const recommendationsList = recommendations
-        .split(/(?=\*\*\d+\.)/)
-        .filter(rec => rec.trim() && rec.includes('**'))
-        .map(rec => rec.trim());
+    try {
+        // Parsear las recomendaciones si vienen como string
+        const recommendationsList = typeof recommendations === 'string' 
+            ? parseRecommendations(recommendations)
+            : recommendations;
 
-    if (recommendationsList.length === 0) {
-        resultado.innerHTML = `
-            <div class="recommendations-container error">
-                <p>No se pudieron procesar las recomendaciones. Por favor, intenta de nuevo.</p>
-            </div>`;
-        return;
-    }
+        // Crear contenedor para las tarjetas
+        const cardsContainer = document.createElement('div');
+        cardsContainer.style.display = 'grid';
+        cardsContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
+        cardsContainer.style.gap = '20px';
+        cardsContainer.style.padding = '20px 0';
 
-    // Procesar cada recomendación para extraer título, justificación y plataformas
-    const processedRecommendations = recommendationsList
-        .map(rec => {
-            const titleMatch = rec.match(/\*\*(?:\d+\.\s*)?([^*]+)\*\*/);
-            if (!titleMatch) return null;
-            const title = titleMatch[1].trim();
+        // Procesar cada recomendación
+        for (const [index, rec] of recommendationsList.entries()) {
+            const card = document.createElement('div');
+            card.className = 'recommendation-card';
+            card.style.backgroundColor = '#2a2a2a';
+            card.style.borderRadius = '8px';
+            card.style.overflow = 'hidden';
+            card.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
 
-            const justificationMatch = rec.match(/\*\*Justificación:\*\*\s*([^*]+?)(?=\*\*|$)/i);
-            const justification = justificationMatch ? justificationMatch[1].trim() : '';
+            // Crear placeholder mientras se carga la imagen
+            const placeholderUrl = `https://via.placeholder.com/500x750?text=${encodeURIComponent(rec.titulo || 'Cargando...')}`;
+            
+            // Contenido de la tarjeta
+            card.innerHTML = `
+                <div class="card-image" style="position: relative; padding-top: 150%; background: #1a1a1a;">
+                    <img src="${placeholderUrl}" 
+                         alt="${rec.titulo}"
+                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
+                         loading="lazy">
+                </div>
+                <div style="padding: 15px;">
+                    <h3 style="color: #fff; margin: 0 0 10px 0; font-size: 1.2em;">${index + 1}. ${rec.titulo}</h3>
+                    <p style="color: #ccc; margin: 0; font-size: 0.9em;">${rec.descripcion || ''}</p>
+                    ${rec.plataforma ? `<div style="margin-top: 10px; padding: 5px 10px; background: #e50914; color: white; display: inline-block; border-radius: 4px;">Disponible en: ${rec.plataforma}</div>` : ''}
+                </div>
+            `;
 
-            const platformsMatch = rec.match(/\*\*Plataforma(?:s)?:\*\*\s*([^*\n]+)/i);
-            const platforms = platformsMatch ? 
-                platformsMatch[1]
-                    .split(',')
-                    .map(p => p.trim())
-                    .filter(p => p.length > 0) : 
-                [];
+            cardsContainer.appendChild(card);
 
-            return { title, justification, platforms };
-        })
-        .filter(rec => rec && rec.title);
-
-    // Buscar imágenes para cada recomendación
-    const recommendationsWithImages = await Promise.all(
-        processedRecommendations.map(async (rec) => {
+            // Intentar cargar la imagen real
             try {
-                const imageUrl = await searchContentImage(rec.title);
-                return {
-                    ...rec,
-                    imageUrl: imageUrl || null
-                };
+                const imageUrl = await searchContentImage(rec.titulo);
+                if (imageUrl) {
+                    const img = card.querySelector('img');
+                    img.src = imageUrl;
+                    img.onerror = () => {
+                        img.src = placeholderUrl;
+                    };
+                }
             } catch (error) {
-                console.error(`Error buscando imagen para ${rec.title}:`, error);
-                return {
-                    ...rec,
-                    imageUrl: null
-                };
+                console.warn(`No se pudo cargar la imagen para: ${rec.titulo}`, error);
             }
-        })
-    );
+        }
 
-    // Generar el HTML para todas las recomendaciones
-    const recommendationsHTML = `
-        <div class="recommendations-container">
-            <h3>Recomendaciones basadas en "${referencia}"</h3>
-            <div class="recommendations-list">
-                ${recommendationsWithImages.map((rec, index) => `
-                    <article class="recommendation-item">
-                        <div class="recommendation-content">
-                            ${rec.imageUrl ? `
-                                <div class="recommendation-poster">
-                                    <img src="${rec.imageUrl}" alt="Poster de ${rec.title}" loading="lazy">
-                                </div>
-                            ` : ''}
-                            <div class="recommendation-info">
-                                <h4>${index + 1}. ${rec.title}</h4>
-                                ${rec.justification ? `<p class="justification">${rec.justification}</p>` : ''}
-                                ${rec.platforms.length > 0 ? `
-                                    <div class="platforms">
-                                        <span class="platforms-label">Disponible en:</span>
-                                        <div class="platform-badges">
-                                            ${rec.platforms.map(platform => `
-                                                <span class="platform-badge">${platform}</span>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </article>
-                `).join('')}
-            </div>
-        </div>`;
+        resultadoDiv.appendChild(cardsContainer);
+    } catch (error) {
+        console.error('Error al mostrar recomendaciones:', error);
+        showError('Error al mostrar las recomendaciones. Por favor, intenta de nuevo.');
+    }
+}
 
-    resultado.innerHTML = recommendationsHTML;
-    resultado.scrollIntoView({ behavior: 'smooth' });
+function parseRecommendations(text) {
+    try {
+        // Dividir el texto en líneas y procesar cada recomendación
+        const lines = text.split('\n');
+        const recommendations = [];
+        let currentRec = null;
+
+        for (const line of lines) {
+            // Detectar nueva recomendación por número
+            const titleMatch = line.match(/^\d+\.\s+(.+)/);
+            if (titleMatch) {
+                if (currentRec) {
+                    recommendations.push(currentRec);
+                }
+                currentRec = {
+                    titulo: titleMatch[1].trim(),
+                    descripcion: '',
+                    plataforma: ''
+                };
+                continue;
+            }
+
+            // Si hay una recomendación actual, agregar descripción
+            if (currentRec) {
+                if (line.toLowerCase().includes('disponible en:')) {
+                    currentRec.plataforma = line.split(':')[1].trim();
+                } else if (line.trim()) {
+                    currentRec.descripcion += (currentRec.descripcion ? ' ' : '') + line.trim();
+                }
+            }
+        }
+
+        // Añadir la última recomendación
+        if (currentRec) {
+            recommendations.push(currentRec);
+        }
+
+        return recommendations;
+    } catch (error) {
+        console.error('Error al parsear recomendaciones:', error);
+        return [];
+    }
 }
 
 // Función para generar plataformas aleatorias para la demo
