@@ -11,88 +11,152 @@ class GeminiAPI {
 
     async getRecommendations(referencia, tipo, plataformas = [], genero = '') {
         try {
-            if (!referencia || !tipo) {
-                throw new GeminiError('Referencia o tipo no especificado', 'VALIDATION_ERROR');
+            const API_KEY = window.GEMINI_API_KEY;
+            if (!API_KEY) {
+                throw new Error('API key de Gemini no encontrada');
             }
 
-            // Construir el prompt para Gemini
-            let prompt = `Eres un experto en películas y series. Necesito 5 recomendaciones basadas en:
-                - Referencia: "${referencia}" (puede ser un director o una película/serie que le gustó al usuario)
-                - Tipo de contenido: ${tipo === 'movie' ? 'películas' : 'series'}`;
+            const prompt = this.buildPrompt(referencia, tipo, plataformas, genero);
+            const response = await this.makeRequest(prompt);
             
-            if (plataformas.length > 0) {
-                prompt += `\n- Plataformas disponibles: ${plataformas.join(', ')}`;
+            // Validar y procesar la respuesta
+            const processedResponse = this.processResponse(response);
+            if (!processedResponse) {
+                throw new Error('No se pudo procesar la respuesta de Gemini');
             }
-            
-            if (genero) {
-                prompt += `\n- Género preferido: ${genero}`;
-            }
-            
-            prompt += `\n\nPor favor, proporciona exactamente 5 recomendaciones que puedan estar disponibles en las plataformas mencionadas.
-            Para cada recomendación, usa EXACTAMENTE este formato:
 
-            **1. [Título]**
-            **Justificación:** [Por qué se recomienda]
-            **Plataforma:** [Plataforma donde está disponible]
-
-            **2. [Título]**
-            ...`;
-
-            // Construir la solicitud según el formato que has compartido
-            const requestData = {
-                contents: [{
-                    parts: [{
-                        text: prompt
-                    }]
-                }]
-            };
-
-            console.log('Enviando solicitud a Gemini:', requestData);
-
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-            try {
-                // Hacer la solicitud a la API
-                const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestData),
-                    signal: controller.signal
-                });
-
-                clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new GeminiError('API key inválida', 'AUTH_ERROR');
-                    }
-                    if (response.status === 429) {
-                        throw new GeminiError('Límite de solicitudes excedido', 'RATE_LIMIT');
-                    }
-                    throw new GeminiError(`Error HTTP: ${response.status}`, 'HTTP_ERROR');
-                }
-
-                const data = await response.json();
-                console.log('Respuesta de Gemini:', data);
-                
-                // Extraer el texto de la respuesta
-                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0].text) {
-                    return data.candidates[0].content.parts[0].text;
-                } else {
-                    console.error('Formato de respuesta inválido:', data);
-                    return this.getFallbackRecommendationsText(referencia, tipo);
-                }
-            } catch (fetchError) {
-                console.error('Error en la solicitud a Gemini:', fetchError);
-                throw fetchError;
-            }
+            return processedResponse;
         } catch (error) {
-            console.error('Error al obtener recomendaciones de Gemini:', error);
+            console.error('Error en Gemini API:', error);
+            throw new Error('Error al obtener recomendaciones: ' + error.message);
+        }
+    }
+
+    buildPrompt(referencia, tipo, plataformas, genero) {
+        const tipoContenido = tipo === 'movie' ? 'películas' : 'series';
+        const plataformasStr = plataformas.join(', ');
+        const generoStr = genero ? ` del género ${genero}` : '';
+
+        return `Actúa como un experto en cine y series que recomienda contenido similar.
+        Necesito 3 recomendaciones de ${tipoContenido}s similares a "${referencia}" ${plataformasStr}.
+        
+        Formato requerido para cada recomendación:
+        
+        Título: [nombre exacto de la ${tipo}]
+        Descripción: [breve descripción de por qué es similar, máximo 2 líneas]
+        Plataforma: [plataforma(s) donde está disponible]
+        
+        Reglas importantes:
+        1. Solo recomendar ${tipoContenido}s que realmente existan
+        2. Mantener las descripciones concisas y relevantes
+        3. Asegurarse que el contenido esté disponible en las plataformas mencionadas
+        4. No incluir números o viñetas en las recomendaciones
+        5. No incluir texto adicional antes o después de las recomendaciones
+        6. Usar el formato exacto especificado arriba`;
+    }
+
+    async makeRequest(prompt) {
+        const API_KEY = window.GEMINI_API_KEY;
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        try {
+            const response = await fetch(`${url}?key=${API_KEY}`, {
+                method: 'POST',
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        topK: 40,
+                        topP: 0.95,
+                        maxOutputTokens: 1024,
+                    }
+                })
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new GeminiError('API key inválida o expirada', 'INVALID_API_KEY');
+                }
+                if (response.status === 429) {
+                    throw new GeminiError('Límite de solicitudes excedido', 'RATE_LIMIT');
+                }
+                throw new GeminiError(`Error del API: ${response.status}`, 'API_ERROR');
+            }
+
+            const data = await response.json();
+            return data;
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            
+            if (error.name === 'AbortError') {
+                throw new GeminiError('La solicitud excedió el tiempo límite', 'TIMEOUT');
+            }
+            
             throw error;
         }
+    }
+
+    processResponse(response) {
+        if (!response.candidates?.[0]?.content?.parts?.[0]?.text) {
+            throw new GeminiError('Respuesta inválida del API', 'INVALID_RESPONSE');
+        }
+
+        const text = response.candidates[0].content.parts[0].text.trim();
+        const recommendations = this.parseRecommendations(text);
+
+        if (!recommendations || recommendations.length === 0) {
+            throw new GeminiError('No se pudieron procesar las recomendaciones', 'PARSE_ERROR');
+        }
+
+        return recommendations;
+    }
+
+    parseRecommendations(text) {
+        const recommendations = [];
+        let currentRec = {};
+        
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+        
+        for (const line of lines) {
+            if (line.startsWith('Título:')) {
+                if (Object.keys(currentRec).length > 0) {
+                    recommendations.push(currentRec);
+                    currentRec = {};
+                }
+                currentRec.titulo = line.replace('Título:', '').trim();
+            } else if (line.startsWith('Descripción:')) {
+                currentRec.descripcion = line.replace('Descripción:', '').trim();
+            } else if (line.startsWith('Plataforma:')) {
+                currentRec.plataforma = line.replace('Plataforma:', '').trim();
+                
+                // Si tenemos una recomendación completa, la añadimos
+                if (currentRec.titulo && currentRec.descripcion && currentRec.plataforma) {
+                    recommendations.push({...currentRec});
+                    currentRec = {};
+                }
+            }
+        }
+
+        // Añadir la última recomendación si está completa
+        if (currentRec.titulo && currentRec.descripcion && currentRec.plataforma) {
+            recommendations.push(currentRec);
+        }
+
+        return recommendations;
     }
 
     // Método para obtener el texto de recomendaciones de respaldo
@@ -349,8 +413,8 @@ class GeminiAPI {
     }
 }
 
-class GeminiError extends Error {
-    constructor(message, code) {
+export class GeminiError extends Error {
+    constructor(message, code = 'UNKNOWN') {
         super(message);
         this.name = 'GeminiError';
         this.code = code;

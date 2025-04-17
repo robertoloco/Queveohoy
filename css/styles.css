@@ -721,4 +721,82 @@ h1 {
 #error-message.error-critical {
     background-color: #fff5f5;
     border-left: 4px solid #e53e3e;
+}
+
+/* Estilos para recomendaciones */
+#recommendations-container {
+    margin-top: 2rem;
+}
+
+#recommendations-container h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.8rem;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem;
+}
+
+.recommendation-card {
+    background: var(--card-background);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.recommendation-card:hover {
+    transform: translateY(-4px);
+}
+
+.recommendation-image {
+    width: 100%;
+    height: 375px;
+    object-fit: cover;
+    background-color: var(--card-background);
+}
+
+.recommendation-content {
+    padding: 1rem;
+}
+
+.recommendation-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.recommendation-content p {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.platforms {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.platform-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+@media (max-width: 768px) {
+    .recommendations-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    #recommendations-container h2 {
+        font-size: 1.5rem;
+    }
 } 
