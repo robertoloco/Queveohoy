@@ -321,7 +321,7 @@ export async function showGeminiRecommendations(recommendations, query) {
             card.innerHTML = `
                 <div class="card-image" style="
                     position: relative;
-                    padding-top: 56.25%;
+                    padding-top: 150%;
                     background: #1a1a1a;
                     overflow: hidden;
                 ">
@@ -342,26 +342,32 @@ export async function showGeminiRecommendations(recommendations, query) {
                         font-size: 1.3em;
                         line-height: 1.4;
                     ">${index + 1}. ${rec.titulo}</h3>
-                    <p style="
-                        color: #ccc;
-                        margin: 0 0 20px 0;
-                        font-size: 0.95em;
-                        line-height: 1.6;
-                        flex-grow: 1;
-                    ">${rec.descripcion || ''}</p>
+                    <div style="flex-grow: 1;">
+                        <p style="
+                            color: #ccc;
+                            margin: 0;
+                            font-size: 0.95em;
+                            line-height: 1.6;
+                        ">${rec.descripcion || ''}</p>
+                    </div>
                     ${rec.plataforma ? `
                         <div style="
-                            margin-top: auto;
-                            padding: 10px 15px;
-                            background: #e50914;
-                            color: white;
-                            display: inline-block;
-                            border-radius: 6px;
-                            font-size: 0.9em;
-                            font-weight: 500;
-                            box-shadow: 0 2px 4px rgba(229, 9, 20, 0.2);
+                            margin-top: 25px;
+                            padding-top: 20px;
+                            border-top: 1px solid rgba(255, 255, 255, 0.1);
                         ">
-                            📺 Disponible en: ${rec.plataforma}
+                            <div style="
+                                padding: 10px 15px;
+                                background: #e50914;
+                                color: white;
+                                display: inline-block;
+                                border-radius: 6px;
+                                font-size: 0.9em;
+                                font-weight: 500;
+                                box-shadow: 0 2px 4px rgba(229, 9, 20, 0.2);
+                            ">
+                                📺 Disponible en: ${rec.plataforma}
+                            </div>
                         </div>
                     ` : ''}
                 </div>
