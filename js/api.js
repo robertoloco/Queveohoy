@@ -196,24 +196,35 @@ class APIClient {
 export const apiClient = new APIClient();
 
 // Función para buscar la imagen de un contenido por título
-export async function searchContentImage(title) {
+export async function searchContentImage(query) {
     try {
-        const query = encodeURIComponent(title);
-        const url = `${API_CONFIG.baseUrl}/search/multi?api_key=${API_CONFIG.API_KEY}&language=${API_CONFIG.language}&query=${query}`;
+        const apiKey = window.TMDB_API_KEY;
+        if (!apiKey) {
+            throw new Error('API key no encontrada');
+        }
+
+        // Primero buscar la película/serie
+        const searchUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=es-ES`;
         
-        const response = await fetch(url);
+        const response = await fetch(searchUrl);
+        if (!response.ok) {
+            throw new Error('Error en la búsqueda de contenido');
+        }
+
         const data = await response.json();
         
-        if (data.results && data.results.length > 0) {
-            const firstResult = data.results[0];
-            if (firstResult.poster_path) {
-                return `${API_CONFIG.imageBaseUrl}${firstResult.poster_path}`;
-            }
-        }
+        // Tomar el primer resultado que tenga poster_path
+        const firstResult = data.results.find(item => item.poster_path);
         
+        if (firstResult && firstResult.poster_path) {
+            // Construir la URL completa de la imagen
+            return `https://image.tmdb.org/t/p/w500${firstResult.poster_path}`;
+        }
+
+        // Si no se encuentra imagen, retornar null
         return null;
     } catch (error) {
-        console.error('Error buscando imagen:', error);
+        console.error('Error al buscar imagen:', error);
         return null;
     }
 }

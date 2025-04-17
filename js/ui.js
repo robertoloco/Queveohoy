@@ -238,13 +238,11 @@ export async function showGeminiRecommendations(recommendations, query) {
             throw new Error('No se pudieron procesar las recomendaciones');
         }
 
-        console.log('Lista de recomendaciones procesada:', recommendationsList);
-
         // Crear contenedor para las tarjetas
         const cardsContainer = document.createElement('div');
         cardsContainer.style.display = 'grid';
-        cardsContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))';
-        cardsContainer.style.gap = '20px';
+        cardsContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+        cardsContainer.style.gap = '30px';
         cardsContainer.style.padding = '20px 0';
 
         // Procesar cada recomendación
@@ -254,45 +252,126 @@ export async function showGeminiRecommendations(recommendations, query) {
             const card = document.createElement('div');
             card.className = 'recommendation-card';
             card.style.backgroundColor = '#2a2a2a';
-            card.style.borderRadius = '8px';
+            card.style.borderRadius = '12px';
             card.style.overflow = 'hidden';
-            card.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+            card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.2)';
+            card.style.transition = 'all 0.3s ease';
+            card.style.cursor = 'pointer';
+            card.style.position = 'relative';
 
-            // Crear placeholder mientras se carga la imagen
-            const placeholderUrl = `https://via.placeholder.com/500x750/1a1a1a/ffffff?text=${encodeURIComponent(rec.titulo || 'Cargando...')}`;
+            // Extraer año y duración si están presentes en la descripción
+            let year = '';
+            let duracion = '';
+            const yearMatch = rec.descripcion.match(/\((\d{4})\)/);
+            const duracionMatch = rec.descripcion.match(/duración:?\s*(\d+\s*(?:minutos|min|horas|h))/i);
             
-            // Contenido inicial de la tarjeta con placeholder
+            if (yearMatch) year = yearMatch[1];
+            if (duracionMatch) duracion = duracionMatch[1];
+
+            // Crear placeholder con gradiente mientras se carga la imagen
+            const placeholderBackground = `
+                linear-gradient(
+                    135deg, 
+                    #1a1a1a 0%,
+                    #2a2a2a 50%,
+                    #1a1a1a 100%
+                )
+            `;
+            
+            // Contenido inicial de la tarjeta con placeholder mejorado
             card.innerHTML = `
-                <div class="card-image" style="position: relative; padding-top: 150%; background: #1a1a1a;">
-                    <img src="${placeholderUrl}" 
-                         alt="${rec.titulo}"
-                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"
-                         loading="lazy">
+                <div class="card-image" style="position: relative; padding-top: 150%; background: ${placeholderBackground};">
+                    <div class="loading-overlay" style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        background: rgba(0,0,0,0.5);
+                    ">
+                        <div class="loading-spinner" style="
+                            width: 40px;
+                            height: 40px;
+                            border: 4px solid #f3f3f3;
+                            border-top: 4px solid #e50914;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                        "></div>
+                    </div>
+                    <img 
+                        alt="${rec.titulo}"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s ease;"
+                        loading="lazy"
+                    >
                 </div>
-                <div style="padding: 15px;">
-                    <h3 style="color: #fff; margin: 0 0 10px 0; font-size: 1.2em;">${index + 1}. ${rec.titulo}</h3>
-                    <p style="color: #ccc; margin: 0; font-size: 0.9em;">${rec.descripcion || ''}</p>
-                    ${rec.plataforma ? `<div style="margin-top: 10px; padding: 5px 10px; background: #e50914; color: white; display: inline-block; border-radius: 4px;">Disponible en: ${rec.plataforma}</div>` : ''}
+                <div style="padding: 20px;">
+                    <h3 style="color: #fff; margin: 0 0 15px 0; font-size: 1.3em; line-height: 1.4;">${index + 1}. ${rec.titulo}</h3>
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        ${year ? `<span style="color: #aaa; font-size: 0.9em;">📅 ${year}</span>` : ''}
+                        ${duracion ? `<span style="color: #aaa; font-size: 0.9em;">⏱️ ${duracion}</span>` : ''}
+                    </div>
+                    <p style="color: #ccc; margin: 0 0 20px 0; font-size: 1em; line-height: 1.5;">${rec.descripcion || ''}</p>
+                    ${rec.plataforma ? `
+                        <div style="margin-top: 15px; padding: 8px 12px; background: #e50914; color: white; 
+                             display: inline-block; border-radius: 6px; font-weight: 500; 
+                             box-shadow: 0 2px 4px rgba(229, 9, 20, 0.2);">
+                            📺 Disponible en: ${rec.plataforma}
+                        </div>
+                    ` : ''}
                 </div>
             `;
 
+            // Añadir estilos para la animación del spinner
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Añadir efecto hover
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-5px)';
+                card.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.3)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.2)';
+            });
+
             cardsContainer.appendChild(card);
 
-            // Intentar cargar la imagen real
+            // Intentar cargar la imagen de TMDB
             try {
                 const imageUrl = await searchContentImage(rec.titulo);
                 if (imageUrl) {
-                    // Verificar que la imagen se puede cargar
-                    const validImageUrl = await loadImage(imageUrl, rec.titulo);
-                    if (validImageUrl) {
-                        const img = card.querySelector('img');
-                        img.src = validImageUrl;
-                        // Mantener el placeholder como respaldo
-                        img.onerror = () => {
-                            console.log(`Error al cargar imagen para: ${rec.titulo}`);
-                            img.src = placeholderUrl;
-                        };
-                    }
+                    const img = card.querySelector('img');
+                    img.src = imageUrl;
+                    img.onload = () => {
+                        // Cuando la imagen carga, ocultamos el spinner y mostramos la imagen
+                        const loadingOverlay = card.querySelector('.loading-overlay');
+                        if (loadingOverlay) {
+                            loadingOverlay.style.display = 'none';
+                        }
+                        img.style.opacity = '1';
+                    };
+                    img.onerror = () => {
+                        // Si hay error, mostrar un placeholder con el título
+                        const loadingOverlay = card.querySelector('.loading-overlay');
+                        if (loadingOverlay) {
+                            loadingOverlay.innerHTML = `
+                                <div style="text-align: center; padding: 20px; color: #fff;">
+                                    <div style="font-size: 48px; margin-bottom: 10px;">🎬</div>
+                                    <div>${rec.titulo}</div>
+                                </div>
+                            `;
+                        }
+                    };
                 }
             } catch (error) {
                 console.warn(`No se pudo cargar la imagen para: ${rec.titulo}`, error);
