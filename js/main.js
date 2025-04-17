@@ -189,10 +189,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Event listener para permitir presionar Enter en el campo de referencia
-    referenciaInput.addEventListener('keypress', (e) => {
+    // Manejar el evento de Enter en el input de referencia
+    referenciaInput.addEventListener('keypress', async (e) => {
         if (e.key === 'Enter') {
-            buscarReferencia();
+            e.preventDefault(); // Prevenir el envío del formulario
+            const referenceButton = document.querySelector('#buscarReferenciaBtn');
+            referenceButton.click(); // Simular clic en el botón
         }
     });
 
