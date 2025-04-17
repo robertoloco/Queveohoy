@@ -81,23 +81,30 @@ jobs:
 
       - name: Copy static files
         run: |
-          # Copiar archivos estáticos evitando sobrescribir env.js
-          cp -r css/* _site/css/ 2>/dev/null || true
-          find js -type f ! -name 'env.js' -exec cp {} _site/js/ \; 2>/dev/null || true
-          cp -r images/* _site/images/ 2>/dev/null || true
-          cp index.html _site/
+          # Copiar archivos estáticos
+          cp -r css/* _site/css/ || echo "No CSS files to copy"
+          cp -r js/* _site/js/ || echo "No JS files to copy"
+          cp -r images/* _site/images/ || echo "No image files to copy"
+          cp index.html _site/ || echo "No index.html to copy"
+          
+          # Sobrescribir env.js con la versión correcta
+          cat > _site/js/env.js << EOF
+          // API Keys configuration
+          window.TMDB_API_KEY = '$TMDB_KEY';
+          window.GEMINI_API_KEY = '$GEMINI_KEY';
+          
+          // Log para verificar que las keys están presentes
+          console.log('API keys loaded:', {
+              TMDB: window.TMDB_API_KEY ? 'Present' : 'Missing',
+              GEMINI: window.GEMINI_API_KEY ? 'Present' : 'Missing'
+          });
+          EOF
           
           # Verificar la estructura final
+          echo "Contenido del directorio _site:"
+          ls -la _site/
           echo "Contenido de _site/js:"
           ls -la _site/js/
-          
-          # Verificar que env.js sigue presente
-          if [ -f "_site/js/env.js" ]; then
-            echo "✅ env.js sigue presente después de copiar archivos"
-          else
-            echo "❌ Error: env.js se ha perdido durante la copia"
-            exit 1
-          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

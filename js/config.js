@@ -1,5 +1,5 @@
 // Configuración de la API
-const API_CONFIG = {
+export const API_CONFIG = {
     // API Keys
     get API_KEY() {
         const key = window.TMDB_API_KEY;
