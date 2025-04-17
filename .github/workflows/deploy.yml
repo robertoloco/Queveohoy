@@ -36,12 +36,9 @@ jobs:
 
       - name: Create build directory
         run: |
-          # Crear directorio _site y subdirectorios
           mkdir -p _site/js
           mkdir -p _site/css
           mkdir -p _site/images
-          
-          # Verificar que los directorios se crearon correctamente
           ls -la _site
 
       - name: Create env.js file
@@ -49,11 +46,22 @@ jobs:
           TMDB_KEY: ${{ secrets.TMDB_API_KEY }}
           GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          # Verificar que las claves existen
+          if [ -z "$TMDB_KEY" ]; then
+            echo "❌ Error: TMDB_API_KEY no está configurada"
+            exit 1
+          fi
+          
+          if [ -z "$GEMINI_KEY" ]; then
+            echo "❌ Error: GEMINI_API_KEY no está configurada"
+            exit 1
+          fi
+          
           # Crear el archivo env.js
-          cat > _site/js/env.js << EOF
+          cat > _site/js/env.js << 'EOF'
           // API Keys configuration
-          window.TMDB_API_KEY = "${TMDB_KEY}";
-          window.GEMINI_API_KEY = "${GEMINI_KEY}";
+          window.TMDB_API_KEY = '$TMDB_KEY';
+          window.GEMINI_API_KEY = '$GEMINI_KEY';
           
           // Log para verificar que las keys están presentes
           console.log('API keys loaded:', {
@@ -64,7 +72,8 @@ jobs:
           
           # Verificar que el archivo se creó y tiene contenido
           if [ -s "_site/js/env.js" ]; then
-            echo "✅ env.js creado correctamente con $(wc -l < _site/js/env.js) líneas"
+            echo "✅ env.js creado correctamente"
+            echo "Tamaño del archivo: $(wc -c < _site/js/env.js) bytes"
           else
             echo "❌ Error: env.js no se creó o está vacío"
             exit 1
@@ -82,9 +91,13 @@ jobs:
           echo "Contenido de _site/js:"
           ls -la _site/js/
           
-          # Mostrar el contenido de env.js (ocultando las claves)
-          echo "Primeras líneas de env.js:"
-          head -n 1 _site/js/env.js
+          # Verificar que env.js sigue presente
+          if [ -f "_site/js/env.js" ]; then
+            echo "✅ env.js sigue presente después de copiar archivos"
+          else
+            echo "❌ Error: env.js se ha perdido durante la copia"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

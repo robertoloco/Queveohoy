@@ -1,16 +1,52 @@
 // Configuración de la API
-export const API_CONFIG = {
-    API_KEY: window.TMDB_API_KEY || '',
-    GEMINI_API_KEY: window.GEMINI_API_KEY || '',
-    TMDB_LANGUAGE: 'es-ES',
-    TMDB_REGION: 'ES',
-    BASE_URL: 'https://api.themoviedb.org/3',
-    IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/w500',
-    RATE_LIMIT: {
-        MAX_REQUESTS: 40,
-        TIME_WINDOW: 10000 // 10 segundos
+const API_CONFIG = {
+    // API Keys
+    get API_KEY() {
+        const key = window.TMDB_API_KEY;
+        if (!key) {
+            console.error('❌ Error: No se encontró la API key de TMDB');
+            return '';
+        }
+        return key;
+    },
+    get GEMINI_API_KEY() {
+        const key = window.GEMINI_API_KEY;
+        if (!key) {
+            console.error('❌ Error: No se encontró la API key de Gemini');
+            return '';
+        }
+        return key;
+    },
+
+    // Configuración de idioma y región
+    language: 'es-ES',
+    region: 'ES',
+
+    // URLs base
+    baseUrl: 'https://api.themoviedb.org/3',
+    imageBaseUrl: 'https://image.tmdb.org/t/p/',
+
+    // Límite de peticiones
+    rateLimit: {
+        maxRequests: 40,
+        perSeconds: 10
+    },
+
+    // Log de configuración
+    logConfig() {
+        console.log('🔧 Configuración de la API:', {
+            hasTMDBKey: !!this.API_KEY,
+            hasGeminiKey: !!this.GEMINI_API_KEY,
+            language: this.language,
+            region: this.region
+        });
     }
 };
+
+// Verificar configuración al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    API_CONFIG.logConfig();
+});
 
 // Mapeo de proveedores de streaming
 export const PROVIDER_MAP = {
