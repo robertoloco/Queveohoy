@@ -271,62 +271,62 @@ export function showResult(content, type) {
 }
 
 function showGeminiRecommendations(recommendations, query) {
-    const container = document.getElementById('recommendations');
+    const container = document.getElementById('recommendations-container');
     container.innerHTML = '';
 
-    const titleElement = document.createElement('h2');
-    titleElement.textContent = `Recomendaciones basadas en: ${query}`;
-    container.appendChild(titleElement);
+    const title = document.createElement('h2');
+    title.textContent = `Recomendaciones basadas en: ${query}`;
+    container.appendChild(title);
 
     const grid = document.createElement('div');
     grid.className = 'recommendations-grid';
 
-    recommendations.forEach(recommendation => {
+    recommendations.forEach(rec => {
         const card = document.createElement('div');
         card.className = 'recommendation-card';
 
-        const imageLink = document.createElement('a');
-        imageLink.href = `https://www.themoviedb.org/search?query=${encodeURIComponent(recommendation.title)}`;
-        imageLink.target = '_blank';
-        imageLink.rel = 'noopener noreferrer';
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'recommendation-image-container';
 
-        const image = document.createElement('img');
-        image.src = 'img/placeholder.svg';
-        image.alt = recommendation.title;
-        image.className = 'recommendation-image';
+        const img = document.createElement('img');
+        img.className = 'recommendation-image';
+        img.src = 'img/placeholder.svg';
+        img.alt = rec.title;
 
-        if (recommendation.imageUrl) {
-            const tmdbImage = new Image();
-            tmdbImage.onload = () => {
-                image.src = recommendation.imageUrl;
+        if (rec.imageUrl) {
+            const tmdbImg = new Image();
+            tmdbImg.onload = () => {
+                img.src = rec.imageUrl;
             };
-            tmdbImage.onerror = () => {
-                console.log(`Error cargando imagen para: ${recommendation.title}`);
+            tmdbImg.onerror = (error) => {
+                console.error('Error cargando imagen:', error);
             };
-            tmdbImage.src = recommendation.imageUrl;
+            tmdbImg.src = rec.imageUrl;
         }
 
-        imageLink.appendChild(image);
-        card.appendChild(imageLink);
+        imageContainer.appendChild(img);
+        card.appendChild(imageContainer);
 
         const content = document.createElement('div');
         content.className = 'recommendation-content';
 
         const title = document.createElement('h3');
-        title.textContent = recommendation.title;
+        title.className = 'recommendation-title';
+        title.textContent = rec.title;
         content.appendChild(title);
 
-        if (recommendation.description) {
-            const description = document.createElement('p');
-            description.textContent = recommendation.description;
-            content.appendChild(description);
-        }
+        if (rec.platforms && rec.platforms.length > 0) {
+            const platformsContainer = document.createElement('div');
+            platformsContainer.className = 'platforms-container';
 
-        if (recommendation.platforms && recommendation.platforms.length > 0) {
-            const platforms = document.createElement('p');
-            platforms.className = 'platforms';
-            platforms.textContent = recommendation.platforms.join(', ');
-            content.appendChild(platforms);
+            rec.platforms.forEach(platform => {
+                const platformTag = document.createElement('span');
+                platformTag.className = 'platform-tag';
+                platformTag.textContent = platform;
+                platformsContainer.appendChild(platformTag);
+            });
+
+            content.appendChild(platformsContainer);
         }
 
         card.appendChild(content);
@@ -467,4 +467,34 @@ const styles = `
 // Inyectar los estilos
 const styleSheet = document.createElement('style');
 styleSheet.textContent = styles;
-document.head.appendChild(styleSheet); 
+document.head.appendChild(styleSheet);
+
+async function searchContentImage(title) {
+    try {
+        const tmdbApiKey = window.API_CONFIG.getTmdbApiKey();
+        if (!tmdbApiKey) {
+            throw new Error('API key de TMDB no encontrada');
+        }
+
+        const query = encodeURIComponent(title);
+        const response = await fetch(
+            `https://api.themoviedb.org/3/search/multi?api_key=${tmdbApiKey}&query=${query}&language=es-ES`
+        );
+
+        if (!response.ok) {
+            throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+            const result = data.results[0];
+            if (result.poster_path) {
+                return `https://image.tmdb.org/t/p/w500${result.poster_path}`;
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('Error al buscar imagen:', error);
+        return null;
+    }
+} 

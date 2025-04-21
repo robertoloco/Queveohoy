@@ -1,11 +1,14 @@
 /* Variables CSS */
 :root {
-    --primary-color: #e50914;
-    --secondary-color: #1db954;
+    --primary-color: #1a1a1a;
+    --secondary-color: #2a2a2a;
+    --accent-color: #3a3a3a;
     --background-color: #141414;
     --card-background: #1e1e1e;
     --text-color: #ffffff;
     --transition-speed: 0.3s;
+    --card-bg: #2a2a2a;
+    --hover-color: #4a4a4a;
 }
 
 /* Reset y estilos base */
@@ -737,93 +740,89 @@ h1 {
 
 .recommendations-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
-    padding: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem;
+    width: 100%;
 }
 
 .recommendation-card {
-    background: #2a2a2a;
-    border-radius: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
     overflow: hidden;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
 }
 
 .recommendation-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+.recommendation-image-container {
+    position: relative;
+    width: 100%;
+    padding-top: 150%;
+    overflow: hidden;
 }
 
 .recommendation-image {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 375px;
+    height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.recommendation-card:hover .recommendation-image {
-    transform: scale(1.05);
 }
 
 .recommendation-content {
-    padding: 1.5rem;
-}
-
-.recommendation-content h3 {
-    margin: 0 0 1rem 0;
-    color: #fff;
-    font-size: 1.2rem;
-    font-weight: 600;
-}
-
-.recommendation-content p {
-    color: #ccc;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin: 0.5rem 0;
-}
-
-.recommendation-content .platforms {
-    color: #888;
-    font-size: 0.9rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #3a3a3a;
-}
-
-.platforms {
+    padding: 1rem;
+    flex-grow: 1;
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    flex-direction: column;
 }
 
-.platform-icon {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
+.recommendation-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.platforms-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.platform-tag {
+    background: var(--accent-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--text-color);
 }
 
 @media (max-width: 768px) {
     .recommendations-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 1rem;
         padding: 1rem;
     }
 
-    .recommendation-image {
-        height: 300px;
-    }
-
     .recommendation-content {
-        padding: 1rem;
+        padding: 0.75rem;
     }
 
     .recommendation-content h3 {
-        font-size: 1.1rem;
+        font-size: 0.9rem;
     }
 
-    #recommendations-container h2 {
-        font-size: 1.5rem;
+    .platform-logo {
+        width: 20px;
+        height: 20px;
     }
 } 
