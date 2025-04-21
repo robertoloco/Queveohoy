@@ -1,5 +1,5 @@
 import { getRandomContent, searchByReference } from './api.js';
-import { showLoading, hideLoading, showError, showResult, showGeminiRecommendations, searchContentImage } from './ui.js';
+import { showLoading, hideLoading, showError, showResult, showGeminiRecommendations } from './ui.js';
 import { GENRES, PROVIDER_MAP } from './config.js';
 import { geminiAPI } from './gemini.js';
 
@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const referenceInput = document.getElementById('referenceInput');
     const recommendations = document.getElementById('recommendations');
     const resultado = document.getElementById('resultado');
-    const plataformas = document.querySelectorAll('#plataformas input[type="checkbox"]');
 
     // Función para alternar la visibilidad de las recomendaciones
     function toggleRecommendations(showAI = false) {
@@ -52,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Obtener plataformas seleccionadas
     function getSelectedPlatforms() {
-        return Array.from(document.querySelectorAll('#plataformas input[type="checkbox"]'))
+        return Array.from(document.querySelectorAll('.checkbox-icon input[type="checkbox"]'))
             .filter(checkbox => checkbox.checked)
             .map(checkbox => checkbox.value);
     }
@@ -70,7 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleRecommendations(false);
             
             const selectedPlatforms = getSelectedPlatforms();
-            const content = await apiClient.getRandomContent(
+            console.log('Plataformas seleccionadas:', selectedPlatforms);
+            
+            const content = await getRandomContent(
                 contentType.value,
                 selectedPlatforms,
                 genre.value
@@ -78,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             showResult(content, contentType.value);
         } catch (error) {
-            showError(error.message);
+            console.error('Error al obtener contenido aleatorio:', error);
+            showError(error.message || 'Error al obtener recomendaciones');
         } finally {
             hideLoading();
         }
@@ -96,6 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleRecommendations(true);
             
             const selectedPlatforms = getSelectedPlatforms();
+            console.log('Buscando recomendaciones para:', reference);
+            console.log('Plataformas seleccionadas:', selectedPlatforms);
+            
             const recommendations = await geminiAPI.getRecommendations(
                 reference,
                 contentType.value,
@@ -105,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             showGeminiRecommendations(recommendations, reference);
         } catch (error) {
-            showError(error.message);
+            console.error('Error al buscar recomendaciones:', error);
+            showError(error.message || 'Error al obtener recomendaciones');
         } finally {
             hideLoading();
         }

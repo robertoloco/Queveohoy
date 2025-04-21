@@ -130,63 +130,49 @@ class APIClient {
 
     async getRandomContent(type, platforms = [], genreId = '') {
         try {
-            const params = {
-                'vote_count.gte': 50,
-                'vote_average.gte': 5,
-                'watch_region': API_CONFIG.region,
-                'language': API_CONFIG.language,
-                'sort_by': 'popularity.desc',
-                'include_adult': false,
-                'append_to_response': 'credits,watch/providers'
-            };
+            const tmdbApiKey = window.TMDB_API_KEY;
+            if (!tmdbApiKey) {
+                throw new Error('API key de TMDB no encontrada');
+            }
 
-            // Añadir género si está seleccionado
+            console.log('Obteniendo contenido aleatorio:', { type, platforms, genreId });
+
+            // Construir la URL base
+            let url = `${TMDB_BASE_URL}/discover/${type}?api_key=${tmdbApiKey}&language=es-ES&sort_by=popularity.desc&include_adult=false&page=1`;
+            
+            // Añadir filtro de género si se especifica
             if (genreId) {
-                params['with_genres'] = genreId;
+                url += `&with_genres=${genreId}`;
             }
 
-            // Si no hay plataformas seleccionadas, usar todas las disponibles
-            const platformsToUse = platforms.length > 0 ? platforms : Object.keys(PROVIDER_MAP);
-            
-            // Convertir nombres de plataformas a IDs
-            const platformIds = platformsToUse
-                .map(platform => PROVIDER_MAP[platform])
-                .filter(id => id !== undefined);
-
-            if (platformIds.length > 0) {
-                params['with_watch_providers'] = platformIds.join('|');
-            }
-            
-            console.log('Iniciando búsqueda con:', {
-                plataformas: platformsToUse,
-                tipo: type,
-                genero: genreId
-            });
-            
-            console.log('Parámetros de búsqueda:', params);
-
-            const response = await this._makeRequest(`/discover/${type}`, params);
-            
-            if (!response.results || response.results.length === 0) {
-                throw new Error('No se encontraron resultados para los criterios seleccionados. Intenta con otros filtros.');
+            // Realizar la búsqueda
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
             }
 
-            // Obtener un resultado aleatorio
-            const randomIndex = Math.floor(Math.random() * response.results.length);
-            const basicContent = response.results[randomIndex];
-
-            if (!basicContent) {
-                throw new Error('Error al seleccionar contenido aleatorio');
+            const data = await response.json();
+            if (!data.results || data.results.length === 0) {
+                throw new Error('No se encontraron resultados');
             }
 
-            // Obtener detalles completos del contenido
-            const contentDetails = await this._makeRequest(`/${type}/${basicContent.id}`, {
-                append_to_response: 'credits,watch/providers'
-            });
+            // Seleccionar un resultado aleatorio
+            const randomIndex = Math.floor(Math.random() * data.results.length);
+            const content = data.results[randomIndex];
 
-            return contentDetails;
+            // Obtener detalles adicionales
+            const detailsUrl = `${TMDB_BASE_URL}/${type}/${content.id}?api_key=${tmdbApiKey}&language=es-ES&append_to_response=credits,watch/providers`;
+            const detailsResponse = await fetch(detailsUrl);
+            if (!detailsResponse.ok) {
+                throw new Error(`Error al obtener detalles: ${detailsResponse.status}`);
+            }
+
+            const details = await detailsResponse.json();
+            console.log('Detalles del contenido:', details);
+
+            return details;
         } catch (error) {
-            console.error('Error detallado al obtener contenido aleatorio:', error);
+            console.error('Error en getRandomContent:', error);
             throw error;
         }
     }
@@ -196,32 +182,29 @@ class APIClient {
 export const apiClient = new APIClient();
 
 // Función para buscar la imagen de un contenido por título
-export async function searchContentImage(query) {
+export async function searchContentImage(title) {
     try {
-        const apiKey = window.TMDB_API_KEY;
-        if (!apiKey) {
-            throw new Error('API key no encontrada');
+        const tmdbApiKey = window.TMDB_API_KEY;
+        if (!tmdbApiKey) {
+            throw new Error('API key de TMDB no encontrada');
         }
 
-        // Primero buscar la película/serie
-        const searchUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=es-ES`;
-        
-        const response = await fetch(searchUrl);
+        const query = encodeURIComponent(title);
+        const response = await fetch(
+            `${TMDB_BASE_URL}/search/multi?api_key=${tmdbApiKey}&query=${query}&language=es-ES`
+        );
+
         if (!response.ok) {
-            throw new Error('Error en la búsqueda de contenido');
+            throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
         }
 
         const data = await response.json();
-        
-        // Tomar el primer resultado que tenga poster_path
-        const firstResult = data.results.find(item => item.poster_path);
-        
-        if (firstResult && firstResult.poster_path) {
-            // Construir la URL completa de la imagen
-            return `https://image.tmdb.org/t/p/w500${firstResult.poster_path}`;
+        if (data.results && data.results.length > 0) {
+            const result = data.results[0];
+            if (result.poster_path) {
+                return `https://image.tmdb.org/t/p/w500${result.poster_path}`;
+            }
         }
-
-        // Si no se encuentra imagen, retornar null
         return null;
     } catch (error) {
         console.error('Error al buscar imagen:', error);
@@ -247,4 +230,30 @@ async function processRecommendationsWithImages(recommendations) {
         ...recommendations,
         recomendaciones: processedRecommendations
     };
+}
+
+export async function searchByReference(query, type = 'movie') {
+    try {
+        const tmdbApiKey = window.TMDB_API_KEY;
+        if (!tmdbApiKey) {
+            throw new Error('API key de TMDB no encontrada');
+        }
+
+        const url = `${TMDB_BASE_URL}/search/${type}?api_key=${tmdbApiKey}&language=es-ES&query=${encodeURIComponent(query)}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`Error en la búsqueda: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.results || data.results.length === 0) {
+            throw new Error('No se encontraron resultados para la referencia proporcionada');
+        }
+
+        return data.results[0];
+    } catch (error) {
+        console.error('Error en searchByReference:', error);
+        throw error;
+    }
 } 
