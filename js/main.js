@@ -71,51 +71,69 @@ document.addEventListener('DOMContentLoaded', () => {
         cargarGeneros();
     });
 
-    // Botón de búsqueda por referencia
-    buscarReferencia.addEventListener('click', async () => {
-        const referencia = referenciaInput.value.trim();
-        if (!referencia) {
-            showError('Por favor, ingresa un director o contenido de referencia');
-            return;
+    // Función para alternar la visibilidad de las recomendaciones
+    function toggleRecommendations(showAI = false) {
+        const recommendationsDiv = document.getElementById('recommendations');
+        const resultadoDiv = document.getElementById('resultado');
+        
+        if (showAI) {
+            recommendationsDiv.style.display = 'block';
+            resultadoDiv.style.display = 'none';
+        } else {
+            recommendationsDiv.style.display = 'none';
+            resultadoDiv.style.display = 'block';
         }
+    }
 
-        const selectedPlatforms = getSelectedPlatforms();
-        const selectedGenre = genreSelect.value;
-
-        try {
-            showLoading();
-            const recommendations = await geminiAPI.getRecommendations(
-                referencia,
-                tipoContenido,
-                selectedPlatforms,
-                selectedGenre
-            );
-            hideLoading();
-            showGeminiRecommendations(recommendations, referencia);
-        } catch (error) {
-            hideLoading();
-            showError(`Error al obtener recomendaciones: ${error.message}`);
-        }
-    });
-
-    // Botón sorpresa
+    // Event listener para el botón de sorpresa
     botonSorpresa.addEventListener('click', async () => {
         try {
             showLoading();
+            toggleRecommendations(false);
+            
             const selectedPlatforms = getSelectedPlatforms();
-            const selectedGenre = genreSelect.value;
+            const contentType = document.getElementById('contentType').value;
+            const genreId = document.getElementById('genre').value;
 
             const content = await apiClient.getRandomContent(
-                tipoContenido,
+                contentType,
                 selectedPlatforms,
-                selectedGenre
+                genreId
             );
-
-            hideLoading();
-            showResult(content, tipoContenido);
+            showResult(content, contentType);
         } catch (error) {
+            showError(error.message);
+        } finally {
             hideLoading();
-            showError(`Error al obtener contenido: ${error.message}`);
+        }
+    });
+
+    // Event listener para la búsqueda por referencia
+    buscarReferencia.addEventListener('click', async () => {
+        try {
+            const referenceInput = referenciaInput.value.trim();
+            if (!referenceInput) {
+                throw new Error('Por favor, ingresa una película o serie de referencia');
+            }
+
+            showLoading();
+            toggleRecommendations(true);
+            
+            const selectedPlatforms = getSelectedPlatforms();
+            const contentType = document.getElementById('contentType').value;
+            
+            const recommendations = await geminiAPI.getRecommendations(
+                referenceInput,
+                contentType,
+                selectedPlatforms,
+                genreSelect.value
+            );
+            
+            showGeminiRecommendations(recommendations, referenceInput);
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            hideLoading();
         }
     });
 }); 
