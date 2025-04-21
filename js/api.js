@@ -204,25 +204,27 @@ export async function searchContentImage(title) {
             return null;
         }
 
-        const query = encodeURIComponent(title);
-        const url = `${TMDB_BASE_URL}/search/multi?api_key=${tmdbApiKey}&query=${query}&language=es-ES`;
-        
-        console.log('Buscando imagen para:', title);
-        const response = await fetch(url);
+        // Primero buscar el contenido en TMDB
+        const searchUrl = `${TMDB_BASE_URL}/search/multi?api_key=${tmdbApiKey}&query=${encodeURIComponent(title)}&language=es-ES`;
+        console.log('Buscando contenido en TMDB:', title);
 
+        const response = await fetch(searchUrl);
         if (!response.ok) {
-            console.error(`Error en la búsqueda de TMDB: ${response.status}`);
+            console.error('Error en la búsqueda de TMDB:', response.status);
             return null;
         }
 
         const data = await response.json();
-        if (data.results && data.results.length > 0) {
-            const result = data.results[0];
-            if (result.poster_path) {
-                return `${TMDB_IMAGE_BASE_URL}${result.poster_path}`;
-            }
+        console.log('Resultados de búsqueda:', data);
+
+        // Buscar el primer resultado que tenga una imagen de póster
+        const result = data.results?.find(item => item.poster_path);
+        if (result?.poster_path) {
+            const imageUrl = `${TMDB_IMAGE_BASE_URL}${result.poster_path}`;
+            console.log('Imagen encontrada:', imageUrl);
+            return imageUrl;
         }
-        
+
         console.log('No se encontró imagen para:', title);
         return null;
     } catch (error) {

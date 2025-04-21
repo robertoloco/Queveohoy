@@ -325,18 +325,22 @@ export async function showGeminiRecommendations(recommendations, query) {
         img.src = 'img/placeholder.svg';
         img.alt = rec.title;
 
+        // Buscar imagen para la recomendación
         try {
-            // Buscar imagen para la recomendación
+            console.log('Buscando imagen para:', rec.title);
             const imageUrl = await searchContentImage(rec.title);
             if (imageUrl) {
                 const tmdbImg = new Image();
                 tmdbImg.onload = () => {
                     img.src = imageUrl;
+                    console.log('Imagen cargada con éxito:', rec.title);
                 };
                 tmdbImg.onerror = (error) => {
-                    console.error('Error cargando imagen:', error);
+                    console.error('Error cargando imagen para:', rec.title, error);
                 };
                 tmdbImg.src = imageUrl;
+            } else {
+                console.log('No se encontró imagen para:', rec.title);
             }
         } catch (error) {
             console.error('Error al buscar imagen para:', rec.title, error);
@@ -348,10 +352,17 @@ export async function showGeminiRecommendations(recommendations, query) {
         const content = document.createElement('div');
         content.className = 'recommendation-content';
 
-        const title = document.createElement('h3');
-        title.className = 'recommendation-title';
-        title.textContent = rec.title;
-        content.appendChild(title);
+        const titleElement = document.createElement('h3');
+        titleElement.className = 'recommendation-title';
+        titleElement.textContent = rec.title;
+        content.appendChild(titleElement);
+
+        if (rec.description) {
+            const description = document.createElement('p');
+            description.className = 'recommendation-description';
+            description.textContent = rec.description;
+            content.appendChild(description);
+        }
 
         if (rec.platforms && rec.platforms.length > 0) {
             const platformsContainer = document.createElement('div');
