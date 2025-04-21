@@ -18,8 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Create _site directory
-        run: mkdir -p _site/js
+      - name: Create _site directory and subdirectories
+        run: |
+          mkdir -p _site/js
+          mkdir -p _site/css
+          mkdir -p _site/img
 
       - name: Create env.js with API keys
         env:
@@ -30,14 +33,23 @@ jobs:
           echo "window.TMDB_API_KEY = '$TMDB_API_KEY';" >> _site/js/env.js
           echo "window.GEMINI_API_KEY = '$GEMINI_API_KEY';" >> _site/js/env.js
           echo "console.log('✅ API keys cargadas');" >> _site/js/env.js
-          cat _site/js/env.js
 
-      - name: Copy static files
+      - name: Copy static files in order
         run: |
-          cp -r css _site/
-          cp -r js/*.js _site/js/
-          cp -r img _site/
+          # Primero copiamos los archivos base
           cp index.html _site/
+          cp -r img/* _site/img/
+          cp -r css/* _site/css/
+          
+          # Luego copiamos los archivos JS en orden específico
+          cp js/config.js _site/js/
+          cp js/api.js _site/js/
+          cp js/ui.js _site/js/
+          cp js/gemini.js _site/js/
+          cp js/main.js _site/js/
+          
+          # Verificamos los archivos copiados
+          echo "Contenido de _site/js/:"
           ls -la _site/js/
 
       - name: Deploy to GitHub Pages

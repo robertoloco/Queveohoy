@@ -200,36 +200,32 @@ export async function searchContentImage(title) {
     try {
         const tmdbApiKey = window.TMDB_API_KEY;
         if (!tmdbApiKey) {
-            console.error('API key de TMDB no encontrada');
-            return null;
+            throw new Error('API key de TMDB no encontrada');
         }
 
-        // Primero buscar el contenido en TMDB
-        const searchUrl = `${TMDB_BASE_URL}/search/multi?api_key=${tmdbApiKey}&query=${encodeURIComponent(title)}&language=es-ES`;
-        console.log('Buscando contenido en TMDB:', title);
-
-        const response = await fetch(searchUrl);
+        const url = `${TMDB_BASE_URL}/search/multi?api_key=${tmdbApiKey}&language=es-ES&query=${encodeURIComponent(title)}&page=1`;
+        const response = await fetch(url);
+        
         if (!response.ok) {
-            console.error('Error en la búsqueda de TMDB:', response.status);
-            return null;
+            throw new Error(`Error en la búsqueda de imagen: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('Resultados de búsqueda:', data);
-
-        // Buscar el primer resultado que tenga una imagen de póster
-        const result = data.results?.find(item => item.poster_path);
-        if (result?.poster_path) {
-            const imageUrl = `${TMDB_IMAGE_BASE_URL}${result.poster_path}`;
-            console.log('Imagen encontrada:', imageUrl);
-            return imageUrl;
+        if (!data.results || data.results.length === 0) {
+            throw new Error('No se encontraron resultados para la imagen');
         }
 
-        console.log('No se encontró imagen para:', title);
-        return null;
+        const result = data.results[0];
+        const imagePath = result.poster_path || result.backdrop_path;
+        
+        if (!imagePath) {
+            throw new Error('No se encontró imagen para el contenido');
+        }
+
+        return `${TMDB_IMAGE_BASE_URL}${imagePath}`;
     } catch (error) {
-        console.error('Error al buscar imagen:', error);
-        return null;
+        console.error('Error en searchContentImage:', error);
+        throw error;
     }
 }
 

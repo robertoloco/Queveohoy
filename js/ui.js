@@ -302,49 +302,44 @@ export async function searchContentImage(title) {
     }
 }
 
-export async function showGeminiRecommendations(recommendations, query) {
-    const container = document.getElementById('recommendations-container');
+export function showGeminiRecommendations(recommendations, query) {
+    const container = document.getElementById('recommendations');
     container.innerHTML = '';
 
+    // Agregar título basado en la consulta
     const title = document.createElement('h2');
-    title.textContent = `Recomendaciones basadas en: ${query}`;
+    title.textContent = `Recomendaciones basadas en "${query}"`;
     container.appendChild(title);
 
+    // Crear contenedor de grid para las recomendaciones
     const grid = document.createElement('div');
     grid.className = 'recommendations-grid';
+    container.appendChild(grid);
 
-    for (const rec of recommendations) {
+    // Procesar las recomendaciones si vienen como texto
+    const processedRecommendations = typeof recommendations === 'string' 
+        ? parseRecommendations(recommendations) 
+        : recommendations;
+
+    if (!processedRecommendations || processedRecommendations.length === 0) {
+        throw new Error('No se pudieron procesar las recomendaciones');
+    }
+
+    processedRecommendations.forEach(rec => {
         const card = document.createElement('div');
         card.className = 'recommendation-card';
 
         const imageContainer = document.createElement('div');
-        imageContainer.className = 'recommendation-image-container';
+        imageContainer.className = 'recommendation-image';
 
         const img = document.createElement('img');
-        img.className = 'recommendation-image';
-        img.src = 'img/placeholder.svg';
+        img.src = rec.posterPath 
+            ? `https://image.tmdb.org/t/p/w500${rec.posterPath}`
+            : 'img/placeholder.svg';
         img.alt = rec.title;
-
-        // Buscar imagen para la recomendación
-        try {
-            console.log('Buscando imagen para:', rec.title);
-            const imageUrl = await searchContentImage(rec.title);
-            if (imageUrl) {
-                const tmdbImg = new Image();
-                tmdbImg.onload = () => {
-                    img.src = imageUrl;
-                    console.log('Imagen cargada con éxito:', rec.title);
-                };
-                tmdbImg.onerror = (error) => {
-                    console.error('Error cargando imagen para:', rec.title, error);
-                };
-                tmdbImg.src = imageUrl;
-            } else {
-                console.log('No se encontró imagen para:', rec.title);
-            }
-        } catch (error) {
-            console.error('Error al buscar imagen para:', rec.title, error);
-        }
+        img.onerror = () => {
+            img.src = 'img/placeholder.svg';
+        };
 
         imageContainer.appendChild(img);
         card.appendChild(imageContainer);
@@ -352,108 +347,63 @@ export async function showGeminiRecommendations(recommendations, query) {
         const content = document.createElement('div');
         content.className = 'recommendation-content';
 
-        const titleElement = document.createElement('h3');
-        titleElement.className = 'recommendation-title';
-        titleElement.textContent = rec.title;
-        content.appendChild(titleElement);
-
-        if (rec.description) {
-            const description = document.createElement('p');
-            description.className = 'recommendation-description';
-            description.textContent = rec.description;
-            content.appendChild(description);
-        }
+        const title = document.createElement('h3');
+        title.textContent = rec.title;
+        content.appendChild(title);
 
         if (rec.platforms && rec.platforms.length > 0) {
-            const platformsContainer = document.createElement('div');
-            platformsContainer.className = 'platforms-container';
-
-            rec.platforms.forEach(platform => {
-                const platformTag = document.createElement('span');
-                platformTag.className = 'platform-tag';
-                platformTag.textContent = platform;
-                platformsContainer.appendChild(platformTag);
-            });
-
-            content.appendChild(platformsContainer);
+            const platforms = document.createElement('div');
+            platforms.className = 'platforms';
+            platforms.textContent = rec.platforms.join(', ');
+            content.appendChild(platforms);
         }
 
         card.appendChild(content);
         grid.appendChild(card);
-    }
-
-    container.appendChild(grid);
+    });
 }
 
 function parseRecommendations(text) {
-    console.log('Parseando recomendaciones:', text);
-    const lines = text.split('\n').map(line => line.trim());
+    const lines = text.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+
     const recommendations = [];
     let currentRec = null;
 
     for (const line of lines) {
-        if (!line) continue;
-
-        // Limpiar caracteres especiales y asteriscos
-        const cleanLine = line.replace(/[*]/g, '').trim();
-
-        // Detectar nueva recomendación por número o título
-        if (/^\d+\./.test(cleanLine) || /^título:/i.test(cleanLine)) {
+        // Si la línea comienza con un número o "Título:", es una nueva recomendación
+        if (/^\d+\./.test(line) || line.toLowerCase().startsWith('título:')) {
             if (currentRec) {
                 recommendations.push(currentRec);
             }
             currentRec = {
-                title: cleanLine.replace(/^\d+\.\s*|^título:\s*/i, ''),
-                description: '',
-                platforms: []
+                title: line.replace(/^\d+\.\s*/, '').replace(/^título:\s*/i, ''),
+                platforms: [],
+                posterPath: null
             };
         } else if (currentRec) {
-            // Detectar plataformas
-            if (/disponible en:/i.test(cleanLine)) {
-                const platformText = cleanLine.replace(/^disponible en:\s*/i, '');
-                currentRec.platforms = platformText.split(/[,\sy]+/)
+            // Buscar plataformas
+            if (line.toLowerCase().includes('disponible en:')) {
+                const platformsText = line.split(':')[1];
+                currentRec.platforms = platformsText
+                    .split(',')
                     .map(p => p.trim())
-                    .filter(p => p && p.length > 0);
+                    .filter(p => p.length > 0);
             }
-            // Detectar descripción/justificación
-            else if (/justificación:/i.test(cleanLine)) {
-                currentRec.description = cleanLine.replace(/^justificación:\s*/i, '');
-            }
-            // Agregar a la descripción si no es una línea especial
-            else if (!currentRec.description) {
-                currentRec.description = cleanLine;
+            // Buscar poster path
+            else if (line.includes('posterPath:')) {
+                currentRec.posterPath = line.split(':')[1].trim();
             }
         }
     }
 
-    // Agregar la última recomendación
     if (currentRec) {
         recommendations.push(currentRec);
     }
 
-    console.log('Recomendaciones parseadas:', recommendations);
+    console.log('Recomendaciones procesadas:', recommendations);
     return recommendations;
-}
-
-// Función para generar plataformas aleatorias para la demo
-function getRandomPlatforms() {
-    const allPlatformsKeys = Object.keys(PROVIDER_MAP);
-    const numPlatforms = Math.floor(Math.random() * 3) + 1; // 1-3 plataformas
-    const selectedPlatforms = [];
-    
-    // Copia de las claves para poder modificar la array
-    const availablePlatforms = [...allPlatformsKeys];
-    
-    for (let i = 0; i < numPlatforms && availablePlatforms.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * availablePlatforms.length);
-        const platform = availablePlatforms.splice(randomIndex, 1)[0];
-        selectedPlatforms.push(platform);
-    }
-    
-    // Para depuración
-    console.log('Plataformas seleccionadas:', selectedPlatforms);
-    
-    return selectedPlatforms;
 }
 
 // Estilos
@@ -517,53 +467,3 @@ const styles = `
 const styleSheet = document.createElement('style');
 styleSheet.textContent = styles;
 document.head.appendChild(styleSheet);
-
-function parseRecommendations(text) {
-    console.log('Parseando recomendaciones:', text);
-    const lines = text.split('\n').map(line => line.trim());
-    const recommendations = [];
-    let currentRec = null;
-
-    for (const line of lines) {
-        if (!line) continue;
-
-        // Limpiar caracteres especiales y asteriscos
-        const cleanLine = line.replace(/[*]/g, '').trim();
-
-        // Detectar nueva recomendación por número o título
-        if (/^\d+\./.test(cleanLine) || /^título:/i.test(cleanLine)) {
-            if (currentRec) {
-                recommendations.push(currentRec);
-            }
-            currentRec = {
-                title: cleanLine.replace(/^\d+\.\s*|^título:\s*/i, ''),
-                description: '',
-                platforms: []
-            };
-        } else if (currentRec) {
-            // Detectar plataformas
-            if (/disponible en:/i.test(cleanLine)) {
-                const platformText = cleanLine.replace(/^disponible en:\s*/i, '');
-                currentRec.platforms = platformText.split(/[,\sy]+/)
-                    .map(p => p.trim())
-                    .filter(p => p && p.length > 0);
-            }
-            // Detectar descripción/justificación
-            else if (/justificación:/i.test(cleanLine)) {
-                currentRec.description = cleanLine.replace(/^justificación:\s*/i, '');
-            }
-            // Agregar a la descripción si no es una línea especial
-            else if (!currentRec.description) {
-                currentRec.description = cleanLine;
-            }
-        }
-    }
-
-    // Agregar la última recomendación
-    if (currentRec) {
-        recommendations.push(currentRec);
-    }
-
-    console.log('Recomendaciones parseadas:', recommendations);
-    return recommendations;
-} 
