@@ -24,6 +24,7 @@ jobs:
           echo "🏗️ Creando estructura de directorios..."
           mkdir -p _site/js
           mkdir -p _site/css
+          mkdir -p _site/img/platforms
           mkdir -p _site/images
           
       - name: Create env.js file
@@ -37,33 +38,54 @@ jobs:
             echo "❌ Error: TMDB_API_KEY no está configurada"
             exit 1
           else
-            echo "✅ TMDB_API_KEY encontrada"
+            echo "✅ TMDB_API_KEY encontrada: ${TMDB_KEY:0:5}..."
           fi
           
           if [ -z "$GEMINI_KEY" ]; then
             echo "❌ Error: GEMINI_API_KEY no está configurada"
             exit 1
           else
-            echo "✅ GEMINI_API_KEY encontrada"
+            echo "✅ GEMINI_API_KEY encontrada: ${GEMINI_KEY:0:5}..."
           fi
           
           echo "📝 Creando env.js..."
-          cat > _site/js/env.js << EOF
+          cat > _site/js/env.js << 'EOF'
           // API Keys configuration
-          window.TMDB_API_KEY = '${TMDB_KEY}';
-          window.GEMINI_API_KEY = '${GEMINI_KEY}';
+          window.TMDB_API_KEY = "${TMDB_KEY}";
+          window.GEMINI_API_KEY = "${GEMINI_KEY}";
           
-          console.log('🔑 API keys cargadas correctamente');
+          // Verificar que las claves se han cargado correctamente
+          (function() {
+              try {
+                  if (!window.TMDB_API_KEY || window.TMDB_API_KEY === 'undefined') {
+                      throw new Error('TMDB API key no encontrada');
+                  }
+                  if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === 'undefined') {
+                      throw new Error('Gemini API key no encontrada');
+                  }
+                  console.log('✅ API keys cargadas correctamente');
+              } catch (error) {
+                  console.error('❌ Error cargando API keys:', error);
+                  const errorElement = document.getElementById('error-message');
+                  if (errorElement) {
+                      errorElement.textContent = 'Error: No se pudieron cargar las claves API necesarias.';
+                      errorElement.style.display = 'block';
+                  }
+              }
+          })();
           EOF
           
           echo "✅ env.js creado en _site/js/"
+          echo "📄 Contenido de env.js (primeras líneas):"
+          head -n 3 _site/js/env.js
 
       - name: Copy files
         run: |
           echo "📂 Copiando archivos..."
           cp -r css/* _site/css/ || echo "No hay archivos CSS"
           cp -r js/* _site/js/ || echo "No hay archivos JS"
-          cp -r images/* _site/images/ || echo "No hay imágenes"
+          cp -r img/* _site/img/ || echo "No hay imágenes"
+          cp -r images/* _site/images/ || echo "No hay imágenes adicionales"
           cp index.html _site/ || echo "No se encontró index.html"
           
           echo "📁 Contenido de _site:"

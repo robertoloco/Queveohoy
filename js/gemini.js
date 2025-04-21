@@ -3,17 +3,24 @@ import { API_CONFIG, PROVIDER_MAP } from './config.js';
 // Clase para manejar las solicitudes a la API de Gemini
 class GeminiAPI {
     constructor() {
-        this.apiKey = API_CONFIG.GEMINI_API_KEY;
         this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
         this.timeout = 10000; // 10 segundos
     }
 
+    validateApiKey() {
+        const API_KEY = window.GEMINI_API_KEY;
+        if (!API_KEY || typeof API_KEY !== 'string' || API_KEY.trim() === '') {
+            throw new GeminiError('API key de Gemini no encontrada o inválida', 'INVALID_API_KEY');
+        }
+        if (API_KEY === '${GEMINI_KEY}' || API_KEY === 'undefined') {
+            throw new GeminiError('API key de Gemini no se ha expandido correctamente', 'INVALID_API_KEY');
+        }
+        return API_KEY;
+    }
+
     async getRecommendations(referencia, tipo, plataformas = [], genero = '') {
         try {
-            const API_KEY = window.GEMINI_API_KEY;
-            if (!API_KEY) {
-                throw new Error('API key de Gemini no encontrada');
-            }
+            const API_KEY = this.validateApiKey();
 
             console.log('Obteniendo recomendaciones para:', {
                 referencia,
@@ -25,21 +32,23 @@ class GeminiAPI {
             const prompt = this.buildPrompt(referencia, tipo, plataformas, genero);
             console.log('Prompt generado:', prompt);
 
-            const response = await this.makeRequest(prompt);
+            const response = await this.makeRequest(prompt, API_KEY);
             console.log('Respuesta de Gemini:', response);
             
-            // Validar y procesar la respuesta
             const processedResponse = this.processResponse(response);
             console.log('Respuesta procesada:', processedResponse);
 
             if (!processedResponse) {
-                throw new Error('No se pudo procesar la respuesta de Gemini');
+                throw new GeminiError('No se pudo procesar la respuesta de Gemini', 'PROCESSING_ERROR');
             }
 
             return processedResponse;
         } catch (error) {
             console.error('Error en Gemini API:', error);
-            throw new Error('Error al obtener recomendaciones: ' + error.message);
+            if (error instanceof GeminiError) {
+                throw error;
+            }
+            throw new GeminiError('Error al obtener recomendaciones: ' + error.message);
         }
     }
 
@@ -66,9 +75,7 @@ class GeminiAPI {
         No incluir texto adicional antes o después de las recomendaciones.`;
     }
 
-    async makeRequest(prompt) {
-        const API_KEY = window.GEMINI_API_KEY;
-        
+    async makeRequest(prompt, API_KEY) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -115,6 +122,9 @@ class GeminiAPI {
             clearTimeout(timeoutId);
 
             if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                console.error('Error response:', errorData);
+
                 if (response.status === 401) {
                     throw new GeminiError('API key inválida o expirada', 'INVALID_API_KEY');
                 }
