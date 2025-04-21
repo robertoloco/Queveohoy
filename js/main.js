@@ -1,6 +1,6 @@
-import { apiClient } from './api.js';
-import { showLoading, hideLoading, showError, showResult, showGeminiRecommendations } from './ui.js';
-import { GENRES } from './config.js';
+import { getRandomContent, searchByReference } from './api.js';
+import { showLoading, hideLoading, showError, showResult, showGeminiRecommendations, searchContentImage } from './ui.js';
+import { GENRES, PROVIDER_MAP } from './config.js';
 import { geminiAPI } from './gemini.js';
 
 document.addEventListener('DOMContentLoaded', () => {

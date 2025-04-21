@@ -270,7 +270,39 @@ export function showResult(content, type) {
     document.head.appendChild(style);
 }
 
-function showGeminiRecommendations(recommendations, query) {
+// Función para buscar imágenes de contenido
+export async function searchContentImage(title) {
+    try {
+        const tmdbApiKey = window.TMDB_API_KEY;
+        if (!tmdbApiKey) {
+            console.error('API key de TMDB no encontrada');
+            return null;
+        }
+
+        const query = encodeURIComponent(title);
+        const response = await fetch(
+            `https://api.themoviedb.org/3/search/multi?api_key=${tmdbApiKey}&query=${query}&language=es-ES`
+        );
+
+        if (!response.ok) {
+            throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+            const result = data.results[0];
+            if (result.poster_path) {
+                return `https://image.tmdb.org/t/p/w500${result.poster_path}`;
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('Error al buscar imagen:', error);
+        return null;
+    }
+}
+
+export function showGeminiRecommendations(recommendations, query) {
     const container = document.getElementById('recommendations-container');
     container.innerHTML = '';
 
@@ -281,7 +313,7 @@ function showGeminiRecommendations(recommendations, query) {
     const grid = document.createElement('div');
     grid.className = 'recommendations-grid';
 
-    recommendations.forEach(rec => {
+    recommendations.forEach(async rec => {
         const card = document.createElement('div');
         card.className = 'recommendation-card';
 
@@ -293,15 +325,17 @@ function showGeminiRecommendations(recommendations, query) {
         img.src = 'img/placeholder.svg';
         img.alt = rec.title;
 
-        if (rec.imageUrl) {
+        // Buscar imagen para la recomendación
+        const imageUrl = await searchContentImage(rec.title);
+        if (imageUrl) {
             const tmdbImg = new Image();
             tmdbImg.onload = () => {
-                img.src = rec.imageUrl;
+                img.src = imageUrl;
             };
             tmdbImg.onerror = (error) => {
                 console.error('Error cargando imagen:', error);
             };
-            tmdbImg.src = rec.imageUrl;
+            tmdbImg.src = imageUrl;
         }
 
         imageContainer.appendChild(img);
@@ -469,32 +503,52 @@ const styleSheet = document.createElement('style');
 styleSheet.textContent = styles;
 document.head.appendChild(styleSheet);
 
-async function searchContentImage(title) {
-    try {
-        const tmdbApiKey = window.API_CONFIG.getTmdbApiKey();
-        if (!tmdbApiKey) {
-            throw new Error('API key de TMDB no encontrada');
-        }
+function parseRecommendations(text) {
+    console.log('Parseando recomendaciones:', text);
+    const lines = text.split('\n').map(line => line.trim());
+    const recommendations = [];
+    let currentRec = null;
 
-        const query = encodeURIComponent(title);
-        const response = await fetch(
-            `https://api.themoviedb.org/3/search/multi?api_key=${tmdbApiKey}&query=${query}&language=es-ES`
-        );
+    for (const line of lines) {
+        if (!line) continue;
 
-        if (!response.ok) {
-            throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
-        }
+        // Limpiar caracteres especiales y asteriscos
+        const cleanLine = line.replace(/[*]/g, '').trim();
 
-        const data = await response.json();
-        if (data.results && data.results.length > 0) {
-            const result = data.results[0];
-            if (result.poster_path) {
-                return `https://image.tmdb.org/t/p/w500${result.poster_path}`;
+        // Detectar nueva recomendación por número o título
+        if (/^\d+\./.test(cleanLine) || /^título:/i.test(cleanLine)) {
+            if (currentRec) {
+                recommendations.push(currentRec);
+            }
+            currentRec = {
+                title: cleanLine.replace(/^\d+\.\s*|^título:\s*/i, ''),
+                description: '',
+                platforms: []
+            };
+        } else if (currentRec) {
+            // Detectar plataformas
+            if (/disponible en:/i.test(cleanLine)) {
+                const platformText = cleanLine.replace(/^disponible en:\s*/i, '');
+                currentRec.platforms = platformText.split(/[,\sy]+/)
+                    .map(p => p.trim())
+                    .filter(p => p && p.length > 0);
+            }
+            // Detectar descripción/justificación
+            else if (/justificación:/i.test(cleanLine)) {
+                currentRec.description = cleanLine.replace(/^justificación:\s*/i, '');
+            }
+            // Agregar a la descripción si no es una línea especial
+            else if (!currentRec.description) {
+                currentRec.description = cleanLine;
             }
         }
-        return null;
-    } catch (error) {
-        console.error('Error al buscar imagen:', error);
-        return null;
     }
+
+    // Agregar la última recomendación
+    if (currentRec) {
+        recommendations.push(currentRec);
+    }
+
+    console.log('Recomendaciones parseadas:', recommendations);
+    return recommendations;
 } 
