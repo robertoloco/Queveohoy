@@ -271,84 +271,87 @@ export function showResult(content, type) {
 }
 
 export async function showGeminiRecommendations(recommendations, query) {
-    const container = document.getElementById('recommendations');
-    if (!container) {
-        console.error('No se encontró el contenedor de recomendaciones');
-        return;
-    }
+    const recommendationsDiv = document.getElementById('recommendations');
+    recommendationsDiv.innerHTML = `
+        <h2>Recomendaciones basadas en "${query}"</h2>
+        <div class="recommendations-grid"></div>
+    `;
 
-    container.innerHTML = '';
+    const grid = recommendationsDiv.querySelector('.recommendations-grid');
 
-    const title = document.createElement('h2');
-    title.textContent = `Recomendaciones basadas en "${query}"`;
-    container.appendChild(title);
+    for (const rec of recommendations) {
+        try {
+            // Buscar la imagen en TMDB
+            const searchResult = await searchContentImage(rec.title);
+            const imageUrl = searchResult?.poster_path 
+                ? `https://image.tmdb.org/t/p/w500${searchResult.poster_path}`
+                : PLACEHOLDER_IMAGE;
 
-    const grid = document.createElement('div');
-    grid.className = 'recommendations-grid';
-
-    try {
-        const parsedRecommendations = typeof recommendations === 'string' 
-            ? parseRecommendations(recommendations) 
-            : recommendations;
-
-        if (!parsedRecommendations || parsedRecommendations.length === 0) {
-            throw new Error('No se pudieron procesar las recomendaciones');
-        }
-
-        for (const rec of parsedRecommendations) {
             const card = document.createElement('div');
             card.className = 'recommendation-card';
-
-            const imgContainer = document.createElement('div');
-            imgContainer.className = 'recommendation-image';
-            
-            // Mostrar placeholder mientras carga
-            const img = document.createElement('img');
-            img.src = PLACEHOLDER_IMAGE;
-            img.alt = rec.title;
-            imgContainer.appendChild(img);
-
-            const content = document.createElement('div');
-            content.className = 'recommendation-content';
-
-            const title = document.createElement('h3');
-            title.textContent = rec.title;
-
-            const description = document.createElement('p');
-            description.textContent = rec.description;
-
-            const platforms = document.createElement('div');
-            platforms.className = 'platforms';
-            if (rec.platforms && rec.platforms.length > 0) {
-                rec.platforms.forEach(platform => {
-                    const icon = document.createElement('img');
-                    icon.className = 'platform-icon';
-                    icon.src = `img/platforms/${platform.toLowerCase()}.png`;
-                    icon.alt = platform;
-                    icon.title = platform;
-                    platforms.appendChild(icon);
-                });
-            }
-
-            content.appendChild(title);
-            content.appendChild(description);
-            content.appendChild(platforms);
-
-            card.appendChild(imgContainer);
-            card.appendChild(content);
+            card.innerHTML = `
+                <div class="recommendation-image">
+                    <img src="${imageUrl}" alt="${rec.title}" onerror="this.src='${PLACEHOLDER_IMAGE}'">
+                </div>
+                <div class="recommendation-info">
+                    <h3>${rec.title}</h3>
+                    <p>${rec.description}</p>
+                    <p class="platforms">Disponible en: ${rec.platforms.join(', ')}</p>
+                </div>
+            `;
             grid.appendChild(card);
-
-            // Intentar cargar la imagen real
-            if (rec.image) {
-                const imageUrl = await getThumbnailUrl(rec.image);
-                img.src = imageUrl;
-            }
+        } catch (error) {
+            console.error('Error al mostrar recomendación:', error);
         }
+    }
 
-        container.appendChild(grid);
-    } catch (error) {
-        console.error('Error mostrando recomendaciones:', error);
-        container.innerHTML = `<p class="error">Error mostrando recomendaciones: ${error.message}</p>`;
+    // Añadir estilos si no existen
+    if (!document.getElementById('recommendations-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'recommendations-styles';
+        styles.textContent = `
+            .recommendations-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 2rem;
+                padding: 2rem;
+            }
+            .recommendation-card {
+                background: #2a2a2a;
+                border-radius: 8px;
+                overflow: hidden;
+                transition: transform 0.3s ease;
+            }
+            .recommendation-card:hover {
+                transform: translateY(-5px);
+            }
+            .recommendation-image {
+                width: 100%;
+                height: 450px;
+                overflow: hidden;
+            }
+            .recommendation-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .recommendation-info {
+                padding: 1.5rem;
+            }
+            .recommendation-info h3 {
+                margin: 0 0 1rem 0;
+                color: #fff;
+            }
+            .recommendation-info p {
+                margin: 0.5rem 0;
+                color: #ccc;
+            }
+            .platforms {
+                color: #888 !important;
+                font-size: 0.9rem;
+            }
+        `;
+        document.head.appendChild(styles);
     }
 }
 
