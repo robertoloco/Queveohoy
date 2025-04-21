@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { API_CONFIG, PROVIDER_MAP } from './config.js';
 
 // Clase para manejar las solicitudes a la API de Gemini
