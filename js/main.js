@@ -30,12 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Manejo de botones de plataforma
-    const platformButtons = document.querySelectorAll('.platform-button');
-    platformButtons.forEach(button => {
-        const checkbox = button.querySelector('input[type="checkbox"]');
-        button.addEventListener('click', () => {
-            checkbox.checked = !checkbox.checked;
-            button.classList.toggle('selected', checkbox.checked);
+    const platformLabels = document.querySelectorAll('.checkbox-icon');
+    platformLabels.forEach(label => {
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        label.addEventListener('click', (e) => {
+            // Evitar que el click en el label active dos veces el checkbox
+            if (e.target !== checkbox) {
+                e.preventDefault();
+                checkbox.checked = !checkbox.checked;
+            }
+            label.classList.toggle('selected', checkbox.checked);
         });
     });
 

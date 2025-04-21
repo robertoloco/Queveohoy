@@ -16,7 +16,7 @@
     margin: 2rem 0;
 }
 
-.platform-button {
+.checkbox-icon {
     background: #2a2a2a;
     border: none;
     border-radius: 8px;
@@ -32,12 +32,12 @@
     justify-content: center;
 }
 
-.platform-button:hover {
+.checkbox-icon:hover {
     background: #3a3a3a;
     transform: translateY(-2px);
 }
 
-.platform-button input[type="checkbox"] {
+.checkbox-icon input[type="checkbox"] {
     position: absolute;
     opacity: 0;
     cursor: pointer;
@@ -45,12 +45,12 @@
     width: 0;
 }
 
-.platform-button.selected {
+.checkbox-icon.selected {
     background: #e50914;
     box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
 }
 
-.platform-name {
+.checkbox-icon span {
     font-size: 0.8rem;
     margin-top: 0.5rem;
     color: #fff;
