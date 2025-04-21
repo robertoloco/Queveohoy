@@ -8,6 +8,55 @@
     margin: 0 auto;
 }
 
+#plataformas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.platform-button {
+    background: #2a2a2a;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.platform-button:hover {
+    background: #3a3a3a;
+    transform: translateY(-2px);
+}
+
+.platform-button input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.platform-button.selected {
+    background: #e50914;
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+}
+
+.platform-name {
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    color: #fff;
+    text-align: center;
+}
+
 .logo-netflix {
     background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg');
 }

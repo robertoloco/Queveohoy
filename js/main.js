@@ -29,11 +29,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Manejo de botones de plataforma
+    const platformButtons = document.querySelectorAll('.platform-button');
+    platformButtons.forEach(button => {
+        const checkbox = button.querySelector('input[type="checkbox"]');
+        button.addEventListener('click', () => {
+            checkbox.checked = !checkbox.checked;
+            button.classList.toggle('selected', checkbox.checked);
+        });
+    });
+
     // Obtener plataformas seleccionadas
     function getSelectedPlatforms() {
-        return Array.from(plataformas)
+        const selectedPlatforms = Array.from(plataformas)
             .filter(checkbox => checkbox.checked)
             .map(checkbox => checkbox.value);
+        
+        console.log('Plataformas seleccionadas:', selectedPlatforms);
+        return selectedPlatforms;
     }
 
     // Cargar géneros iniciales

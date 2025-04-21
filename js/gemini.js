@@ -3,7 +3,7 @@ import { API_CONFIG, PROVIDER_MAP } from './config.js';
 // Clase para manejar las solicitudes a la API de Gemini
 class GeminiAPI {
     constructor() {
-        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent';
         this.timeout = 10000; // 10 segundos
     }
 
@@ -41,10 +41,18 @@ class GeminiAPI {
                 },
                 body: JSON.stringify({
                     contents: [{
+                        role: "user",
                         parts: [{
                             text: prompt
                         }]
-                    }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        topK: 40,
+                        topP: 0.95,
+                        maxOutputTokens: 1024,
+                    },
+                    safetySettings: []
                 })
             });
 
