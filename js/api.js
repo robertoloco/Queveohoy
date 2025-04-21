@@ -196,54 +196,35 @@ class APIClient {
 export const apiClient = new APIClient();
 
 // Función para buscar la imagen de un contenido por título
-export async function searchContentImage(title) {
+export async function searchContentImage(query) {
     try {
-        console.log('🔍 Buscando imagen para:', title);
+        const apiKey = window.TMDB_API_KEY;
+        if (!apiKey) {
+            throw new Error('API key no encontrada');
+        }
+
+        // Primero buscar la película/serie
+        const searchUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=es-ES`;
         
-        // Validar que tenemos la API key
-        if (!window.TMDB_API_KEY) {
-            throw new Error('TMDB_API_KEY no está configurada');
+        const response = await fetch(searchUrl);
+        if (!response.ok) {
+            throw new Error('Error en la búsqueda de contenido');
         }
 
-        // Buscar en películas primero
-        const movieResponse = await fetch(
-            `https://api.themoviedb.org/3/search/movie?api_key=${window.TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`
-        );
+        const data = await response.json();
         
-        if (!movieResponse.ok) {
-            throw new Error(`Error en la búsqueda de películas: ${movieResponse.status}`);
-        }
-
-        const movieData = await movieResponse.json();
+        // Tomar el primer resultado que tenga poster_path
+        const firstResult = data.results.find(item => item.poster_path);
         
-        // Si encontramos una película, usar su imagen
-        if (movieData.results && movieData.results.length > 0) {
-            console.log('✅ Imagen encontrada en películas:', movieData.results[0].title);
-            return movieData.results[0];
+        if (firstResult && firstResult.poster_path) {
+            // Construir la URL completa de la imagen
+            return `https://image.tmdb.org/t/p/w500${firstResult.poster_path}`;
         }
 
-        // Si no hay resultados en películas, buscar en series
-        const tvResponse = await fetch(
-            `https://api.themoviedb.org/3/search/tv?api_key=${window.TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`
-        );
-
-        if (!tvResponse.ok) {
-            throw new Error(`Error en la búsqueda de series: ${tvResponse.status}`);
-        }
-
-        const tvData = await tvResponse.json();
-
-        // Si encontramos una serie, usar su imagen
-        if (tvData.results && tvData.results.length > 0) {
-            console.log('✅ Imagen encontrada en series:', tvData.results[0].name);
-            return tvData.results[0];
-        }
-
-        console.warn('⚠️ No se encontraron imágenes para:', title);
+        // Si no se encuentra imagen, retornar null
         return null;
-
     } catch (error) {
-        console.error('❌ Error buscando imagen:', error);
+        console.error('Error al buscar imagen:', error);
         return null;
     }
 }
