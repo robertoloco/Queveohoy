@@ -1,11 +1,12 @@
 .platform-logo {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     display: block;
     margin: 0 auto;
+    margin-bottom: 0.5rem;
 }
 
 #plataformas {
@@ -16,73 +17,70 @@
     margin: 2rem 0;
 }
 
+.platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
 .checkbox-icon {
-    background: #2a2a2a;
-    border: none;
-    border-radius: 8px;
-    padding: 0.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    width: 80px;
-    height: 80px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    cursor: pointer;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(26, 26, 26, 0.5);
+    transition: all 0.3s ease;
 }
 
 .checkbox-icon:hover {
-    background: #3a3a3a;
-    transform: translateY(-2px);
-}
-
-.checkbox-icon input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
+    background: rgba(229, 9, 20, 0.1);
 }
 
 .checkbox-icon.selected {
-    background: #e50914;
-    box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+    background: rgba(229, 9, 20, 0.2);
+    box-shadow: 0 0 0 2px #e50914;
+}
+
+.checkbox-icon input[type="checkbox"] {
+    display: none;
 }
 
 .checkbox-icon span {
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-    color: #fff;
+    color: #ccc;
+    font-size: 0.9rem;
     text-align: center;
 }
 
+/* Logos de plataformas */
 .logo-netflix {
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg');
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2U1MDkxNCIgZD0iTTUuMzk4IDMuMzY1djE3LjI3TDcuNjMgMjAuMlYxNy4zNWwxLjU3Mi0uNDQ1VjIwLjJsMS41NzItLjQ0NVYzLjM2NUg1LjM5OHptMTMuMjA0IDB2MTcuMjdMMTYuMzcgMjAuMlYzLjM2NWgyLjIzMnoiLz48L3N2Zz4=');
 }
 
 .logo-max {
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg');
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAxQTZGMCIgZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAxOGMtNC40MTEgMC04LTMuNTg5LTgtOHMzLjU4OS04IDgtOCA4IDMuNTg5IDggOC0zLjU4OSA4LTggOHoiLz48L3N2Zz4=');
 }
 
 .logo-disney {
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg');
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzFFN0RGRiIgZD0iTTIgMTJjMCA1LjUyMyA0LjQ3NyAxMCAxMCAxMHMxMC00LjQ3NyAxMC0xMFMyMi41MjMgMiAxMiAyIDIgNi40NzcgMiAxMnptMTEuNS02LjVjMi40ODUgMCA0LjUgMi4wMTUgNC41IDQuNXMtMi4wMTUgNC41LTQuNSA0LjUtNC41LTIuMDE1LTQuNS00LjUtMi4wMTUtNC41IDQuNS00LjV6Ii8+PC9zdmc+');
 }
 
 .logo-prime {
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png');
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQThFMSIgZD0iTTIwLjE4IDEyLjM2Yy0xLjY4LTEuMjEtMy45MS0xLjg4LTYuMjgtMS44OC0yLjM3IDAtNC42LjY3LTYuMjggMS44OC0xLjY4IDEuMjEtMi42IDIuODItMi42IDQuNTJ2Mi4yNGMwIC4zOS4zMS43MS43MS43MWgxNi4zNGMuMzkgMCAuNzEtLjMyLjcxLS43MXYtMi4yNGMwLTEuNy0uOTItMy4zMS0yLjYtNC41MnoiLz48L3N2Zz4=');
 }
 
 .logo-apple {
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg');
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTE4LjcxIDEwLjgzYy0uMjMtMi4zMiAxLjg5LTMuNTggMi0zLjYzLTEuMDktMS41OS0yLjc5LTEuOC0zLjM4LTEuODMtMS40NC0uMTUtMi44MS44NS0zLjU0Ljg1LS43MyAwLTEuODYtLjgzLTMuMDYtLjgtMS41OC4wMi0zLjAzLjkxLTMuODQgMi4zMi0xLjY0IDIuODMtLjQyIDcuMDEgMS4xNyA5LjMxLjc4IDEuMTMgMS43MSAyLjQgMi45MyAyLjM1IDEuMTgtLjA1IDEuNjItLjc2IDMuMDQtLjc2IDEuNDIgMCAxLjgyLjc2IDMuMDYuNzMgMS4yNi0uMDIgMi4wNi0xLjE0IDIuODMtMi4yNy44OS0xLjMgMS4yNi0yLjU2IDEuMjgtMi42My0uMDMtLjAxLTIuNDUtLjk0LTIuNDgtMy43M3oiLz48L3N2Zz4=');
 }
 
 .logo-filmin {
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/d/dd/Logotipo_Filmin_2023.png');
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQjM1QSIgZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAxOGMtNC40MTEgMC04LTMuNTg5LTgtOHMzLjU4OS04IDgtOCA4IDMuNTg5IDggOC0zLjU4OSA4LTggOHoiLz48L3N2Zz4=');
 }
 
 .logo-movistar {
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/1/1d/Movistar_Plus%2B_2022_logo.svg');
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwOTlGRiIgZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAxOGMtNC40MTEgMC04LTMuNTg5LTgtOHMzLjU4OS04IDgtOCA4IDMuNTg5IDggOC0zLjU4OSA4LTggOHoiLz48L3N2Zz4=');
 }
 
 .logo-skyshowtime {
@@ -102,5 +100,5 @@
 }
 
 .logo-crunchyroll {
-    background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png');
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0Y0N0QxQSIgZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAxOGMtNC40MTEgMC04LTMuNTg5LTgtOHMzLjU4OS04IDgtOCA4IDMuNTg5IDggOC0zLjU4OSA4LTggOHoiLz48L3N2Zz4=');
 } 
