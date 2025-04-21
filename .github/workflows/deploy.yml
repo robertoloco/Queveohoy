@@ -13,93 +13,36 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v2
 
-      - name: Create build directory
-        run: |
-          echo "🏗️ Creando estructura de directorios..."
-          mkdir -p _site/js
-          mkdir -p _site/css
-          mkdir -p _site/img/platforms
-          mkdir -p _site/images
-          
-      - name: Create env.js file
+      - name: Create _site directory
+        run: mkdir -p _site/js
+
+      - name: Create env.js with API keys
         env:
-          TMDB_KEY: ${{ secrets.TMDB_API_KEY }}
-          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "🔑 Verificando claves API..."
-          
-          if [ -z "$TMDB_KEY" ]; then
-            echo "❌ Error: TMDB_API_KEY no está configurada"
-            exit 1
-          else
-            echo "✅ TMDB_API_KEY encontrada: ${TMDB_KEY:0:5}..."
-          fi
-          
-          if [ -z "$GEMINI_KEY" ]; then
-            echo "❌ Error: GEMINI_API_KEY no está configurada"
-            exit 1
-          else
-            echo "✅ GEMINI_API_KEY encontrada: ${GEMINI_KEY:0:5}..."
-          fi
-          
-          echo "📝 Creando env.js..."
-          # Crear el archivo env.js usando variables de entorno
-          echo "// API Keys configuration" > _site/js/env.js
-          echo "window.TMDB_API_KEY = '$TMDB_KEY';" >> _site/js/env.js
-          echo "window.GEMINI_API_KEY = '$GEMINI_KEY';" >> _site/js/env.js
-          echo "" >> _site/js/env.js
-          echo "// Verificar que las claves se han cargado correctamente" >> _site/js/env.js
-          echo "(function() {" >> _site/js/env.js
-          echo "    try {" >> _site/js/env.js
-          echo "        if (!window.TMDB_API_KEY || window.TMDB_API_KEY === 'undefined') {" >> _site/js/env.js
-          echo "            throw new Error('TMDB API key no encontrada');" >> _site/js/env.js
-          echo "        }" >> _site/js/env.js
-          echo "        if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === 'undefined') {" >> _site/js/env.js
-          echo "            throw new Error('Gemini API key no encontrada');" >> _site/js/env.js
-          echo "        }" >> _site/js/env.js
-          echo "        console.log('✅ API keys cargadas correctamente');" >> _site/js/env.js
-          echo "    } catch (error) {" >> _site/js/env.js
-          echo "        console.error('❌ Error cargando API keys:', error);" >> _site/js/env.js
-          echo "        const errorElement = document.getElementById('error-message');" >> _site/js/env.js
-          echo "        if (errorElement) {" >> _site/js/env.js
-          echo "            errorElement.textContent = 'Error: No se pudieron cargar las claves API necesarias.';" >> _site/js/env.js
-          echo "            errorElement.style.display = 'block';" >> _site/js/env.js
-          echo "        }" >> _site/js/env.js
-          echo "    }" >> _site/js/env.js
-          echo "})();" >> _site/js/env.js
-          
-          echo "✅ env.js creado en _site/js/"
-          echo "📄 Contenido de env.js (primeras líneas):"
-          head -n 3 _site/js/env.js
+          echo "console.log('🔑 Cargando configuración...');" > _site/js/env.js
+          echo "window.TMDB_API_KEY = '$TMDB_API_KEY';" >> _site/js/env.js
+          echo "window.GEMINI_API_KEY = '$GEMINI_API_KEY';" >> _site/js/env.js
+          echo "console.log('✅ API keys cargadas');" >> _site/js/env.js
+          cat _site/js/env.js
 
-      - name: Copy files
+      - name: Copy static files
         run: |
-          echo "📂 Copiando archivos..."
-          cp -r css/* _site/css/ || echo "No hay archivos CSS"
-          cp -r js/* _site/js/ || echo "No hay archivos JS"
-          cp -r img/* _site/img/ || echo "No hay imágenes"
-          cp -r images/* _site/images/ || echo "No hay imágenes adicionales"
-          cp index.html _site/ || echo "No se encontró index.html"
-          
-          # No sobrescribir env.js
-          rm -f _site/js/env.js.bak
-          mv _site/js/env.js _site/js/env.js.bak
-          find js -type f ! -name 'env.js' -exec cp {} _site/js/ \;
-          mv _site/js/env.js.bak _site/js/env.js
-          
-          echo "📁 Contenido de _site:"
-          ls -la _site/
-          echo "📁 Contenido de _site/js:"
+          cp -r css _site/
+          cp -r js/*.js _site/js/
+          cp -r img _site/
+          cp index.html _site/
           ls -la _site/js/
 
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          folder: _site
-          branch: gh-pages 
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          force_orphan: true 
