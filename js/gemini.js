@@ -3,7 +3,7 @@ import { API_CONFIG, PROVIDER_MAP } from './config.js';
 // Clase para manejar las solicitudes a la API de Gemini
 class GeminiAPI {
     constructor() {
-        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
         this.timeout = 10000; // 10 segundos
     }
 
@@ -101,99 +101,115 @@ class GeminiAPI {
         }
     }
 
-    async getRecommendations(referencia, tipo, plataformas = [], genero = '') {
+    async getRecommendations(reference, type, platforms = [], genre = '') {
         try {
-            const API_KEY = this.validateApiKey();
-
-            console.log('Obteniendo recomendaciones para:', {
-                referencia,
-                tipo,
-                plataformas,
-                genero
-            });
-
-            const prompt = this.buildPrompt(referencia, tipo, plataformas, genero);
-            console.log('Prompt generado:', prompt);
-
-            const response = await this.makeRequest(prompt, API_KEY);
-            console.log('Respuesta de Gemini:', response);
-            
-            if (!response.candidates?.[0]?.content?.parts?.[0]?.text) {
-                throw new GeminiError('Respuesta inválida del API', 'INVALID_RESPONSE');
+            const apiKey = window.GEMINI_API_KEY;
+            if (!apiKey) {
+                throw new Error('API key de Gemini no encontrada');
             }
 
-            const text = response.candidates[0].content.parts[0].text;
-            return this.parseRecommendations(text);
+            console.log('Solicitando recomendaciones:', { reference, type, platforms, genre });
 
+            const prompt = this._buildPrompt(reference, type, platforms, genre);
+            const response = await fetch(`${this.baseUrl}?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        topK: 32,
+                        topP: 1,
+                        maxOutputTokens: 1024,
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error en la API de Gemini: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Respuesta de Gemini:', data);
+
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error('Formato de respuesta inválido de Gemini');
+            }
+
+            const text = data.candidates[0].content.parts[0].text;
+            return this._parseRecommendations(text);
         } catch (error) {
-            console.error('Error en Gemini API:', error);
+            console.error('Error al obtener recomendaciones:', error);
             throw error;
         }
     }
 
-    buildPrompt(referencia, tipo, plataformas, genero) {
-        const tipoContenido = tipo === 'movie' ? 'películas' : 'series';
-        const plataformasDisponibles = plataformas.length > 0 ? 
-            `disponibles en ${plataformas.join(' o ')}` : 
-            'en cualquier plataforma de streaming';
-        const generoStr = genero ? ` del género ${genero}` : '';
+    _buildPrompt(reference, type, platforms, genre) {
+        const contentType = type === 'movie' ? 'película' : 'serie';
+        const platformsList = platforms.length > 0 ? platforms.join(', ') : 'cualquier plataforma';
+        const genreText = genre ? ` del género ${genre}` : '';
 
-        return `Actúa como un experto en cine y series.
-        Necesito 3 recomendaciones de ${tipoContenido} similares a "${referencia}" ${plataformasDisponibles}${generoStr}.
-        
-        Reglas:
-        1. Solo recomendar ${tipoContenido} que realmente existan
-        2. Mantener las descripciones concisas (máximo 2 líneas)
-        3. Asegurarse que el contenido esté disponible en las plataformas mencionadas
-        4. Usar exactamente este formato para cada recomendación:
-        
-        Título: [nombre]
-        Justificación: [por qué es similar]
-        Disponible en: [plataformas]
-        
-        No incluir texto adicional antes o después de las recomendaciones.`;
+        return `Actúa como un experto en cine y series. Necesito 3 recomendaciones de ${contentType}s similares a "${reference}" disponibles en ${platformsList}${genreText}. 
+
+Por favor, proporciona las recomendaciones en el siguiente formato para cada una:
+
+1. [Título]
+Disponible en: [plataformas]
+Justificación: [breve explicación de por qué es similar]
+
+Asegúrate de que:
+- Las recomendaciones sean realmente similares en tono, estilo o temática
+- Estén disponibles en las plataformas mencionadas
+- La justificación sea concisa pero informativa
+- No incluyas spoilers
+- No repitas la misma recomendación`;
     }
 
-    parseRecommendations(text) {
-        try {
-            const lines = text.split('\n').filter(line => line.trim());
-            const recommendations = [];
-            let currentRec = null;
+    _parseRecommendations(text) {
+        console.log('Parseando texto de recomendaciones:', text);
+        const recommendations = [];
+        const lines = text.split('\n');
+        let currentRec = null;
 
-            for (const line of lines) {
-                const trimmedLine = line.trim();
-                
-                if (/^Título:/.test(trimmedLine)) {
-                    if (currentRec) {
-                        recommendations.push(currentRec);
-                    }
-                    currentRec = {
-                        title: trimmedLine.replace(/^Título:/, '').trim(),
-                        description: '',
-                        platforms: []
-                    };
-                } else if (currentRec) {
-                    if (trimmedLine.toLowerCase().startsWith('justificación:')) {
-                        currentRec.description = trimmedLine.substring(13).trim();
-                    } else if (trimmedLine.toLowerCase().startsWith('disponible en:')) {
-                        const platformsText = trimmedLine.substring(13).trim();
-                        currentRec.platforms = platformsText
-                            .split(',')
-                            .map(p => p.trim())
-                            .filter(p => p);
-                    }
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) continue;
+
+            // Detectar nuevo título (número seguido de punto o solo el título)
+            if (/^\d+\./.test(trimmedLine) || (!currentRec && !trimmedLine.toLowerCase().startsWith('disponible') && !trimmedLine.toLowerCase().startsWith('justificación'))) {
+                if (currentRec) {
+                    recommendations.push(currentRec);
+                }
+                currentRec = {
+                    title: trimmedLine.replace(/^\d+\.\s*/, ''),
+                    platforms: [],
+                    description: ''
+                };
+            } else if (currentRec) {
+                if (trimmedLine.toLowerCase().startsWith('disponible en:')) {
+                    currentRec.platforms = trimmedLine
+                        .substring('disponible en:'.length)
+                        .split(',')
+                        .map(p => p.trim())
+                        .filter(p => p);
+                } else if (trimmedLine.toLowerCase().startsWith('justificación:')) {
+                    currentRec.description = trimmedLine.substring('justificación:'.length).trim();
                 }
             }
-
-            if (currentRec) {
-                recommendations.push(currentRec);
-            }
-
-            return recommendations;
-        } catch (error) {
-            console.error('Error parseando recomendaciones:', error);
-            throw new GeminiError('Error al procesar las recomendaciones', 'PARSE_ERROR');
         }
+
+        if (currentRec) {
+            recommendations.push(currentRec);
+        }
+
+        console.log('Recomendaciones parseadas:', recommendations);
+        return recommendations;
     }
 }
 

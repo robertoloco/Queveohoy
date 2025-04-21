@@ -99,10 +99,10 @@ if (typeof document !== 'undefined') {
     });
 }
 
-// Mapeo de proveedores de streaming
+// Mapeo de plataformas a IDs de TMDB
 export const PROVIDER_MAP = {
     'Netflix': 8,
-    'Max': 1899,
+    'Max': 384,
     'Disney Plus': 337,
     'Amazon Prime Video': 119,
     'Apple TV Plus': 350,
@@ -111,7 +111,7 @@ export const PROVIDER_MAP = {
     'Crunchyroll': 283
 };
 
-// Géneros disponibles
+// Géneros de películas y series
 export const GENRES = {
     movie: [
         { id: 28, name: 'Acción' },
@@ -142,14 +142,14 @@ export const GENRES = {
         { id: 99, name: 'Documental' },
         { id: 18, name: 'Drama' },
         { id: 10751, name: 'Familia' },
-        { id: 10762, name: 'Kids' },
+        { id: 10762, name: 'Infantil' },
         { id: 9648, name: 'Misterio' },
-        { id: 10763, name: 'News' },
+        { id: 10763, name: 'Noticias' },
         { id: 10764, name: 'Reality' },
-        { id: 10765, name: 'Sci-Fi & Fantasy' },
-        { id: 10766, name: 'Soap' },
-        { id: 10767, name: 'Talk' },
-        { id: 10768, name: 'War & Politics' },
+        { id: 10765, name: 'Ciencia Ficción y Fantasía' },
+        { id: 10766, name: 'Serial' },
+        { id: 10767, name: 'Talk Show' },
+        { id: 10768, name: 'Guerra y Política' },
         { id: 37, name: 'Western' }
     ]
 };
