@@ -1,10 +1,11 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { API_CONFIG, PROVIDER_MAP } from './config.js';
 
 // Clase para manejar las solicitudes a la API de Gemini
 class GeminiAPI {
     constructor() {
-        this.baseUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-pro-2.0:generateContent';
         this.timeout = 10000; // 10 segundos
+        this.model = null;
         this.validateApiKey(); // Validar API key al instanciar
     }
 
@@ -21,13 +22,13 @@ class GeminiAPI {
             console.error('❌ API key de Gemini inválida');
             throw new GeminiError('API key de Gemini inválida', 'INVALID_API_KEY');
         }
-        
-        if (API_KEY === '${GEMINI_API_KEY}' || API_KEY === 'undefined') {
-            console.error('❌ API key de Gemini no se ha expandido correctamente');
-            throw new GeminiError('API key de Gemini no se ha expandido correctamente', 'INVALID_API_KEY');
-        }
 
         console.log('✅ API key de Gemini validada');
+        
+        // Inicializar el modelo
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        this.model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        
         return API_KEY;
     }
 
@@ -37,10 +38,13 @@ class GeminiAPI {
             const prompt = this.generatePrompt(params);
             console.log('Prompt generado:', prompt);
 
-            const API_KEY = this.validateApiKey();
-            const response = await this.makeRequest(prompt, API_KEY);
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
             
-            const recommendations = this.processResponse(response);
+            console.log('Respuesta recibida:', text);
+            
+            const recommendations = this.parseRecommendations(text);
             if (!recommendations || recommendations.length === 0) {
                 throw new GeminiError('No se encontraron recomendaciones', 'NO_RECOMMENDATIONS');
             }
