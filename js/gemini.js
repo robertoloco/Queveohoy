@@ -4,6 +4,7 @@ import { API_CONFIG, PROVIDER_MAP } from './config.js';
 // Clase para manejar las solicitudes a la API de Gemini
 class GeminiAPI {
     constructor() {
+        this.baseUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent';
         this.timeout = 10000; // 10 segundos
         this.model = null;
         this.validateApiKey(); // Validar API key al instanciar
@@ -23,6 +24,11 @@ class GeminiAPI {
             throw new GeminiError('API key de Gemini inválida', 'INVALID_API_KEY');
         }
 
+        if (API_KEY === '${GEMINI_API_KEY}' || API_KEY === 'undefined') {
+            console.error('❌ API key de Gemini no se ha expandido correctamente');
+            throw new GeminiError('API key de Gemini no se ha expandido correctamente', 'INVALID_API_KEY');
+        }
+
         console.log('✅ API key de Gemini validada');
         
         // Inicializar el modelo
@@ -32,27 +38,37 @@ class GeminiAPI {
         return API_KEY;
     }
 
-    async getRecommendations(params) {
+    async getRecommendations(referencia, tipo, plataformas = [], genero = '') {
         try {
-            console.log('📝 Generando prompt para recomendaciones...', params);
-            const prompt = this.generatePrompt(params);
+            const API_KEY = this.validateApiKey();
+
+            console.log('Obteniendo recomendaciones para:', {
+                referencia,
+                tipo,
+                plataformas,
+                genero
+            });
+
+            const prompt = this.buildPrompt(referencia, tipo, plataformas, genero);
             console.log('Prompt generado:', prompt);
 
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
+            const response = await this.makeRequest(prompt, API_KEY);
+            console.log('Respuesta de Gemini:', response);
             
-            console.log('Respuesta recibida:', text);
+            const processedResponse = this.processResponse(response);
+            console.log('Respuesta procesada:', processedResponse);
             
-            const recommendations = this.parseRecommendations(text);
-            if (!recommendations || recommendations.length === 0) {
-                throw new GeminiError('No se encontraron recomendaciones', 'NO_RECOMMENDATIONS');
+            if (!processedResponse) {
+                throw new GeminiError('No se pudo procesar la respuesta de Gemini', 'PROCESSING_ERROR');
             }
 
-            return recommendations;
+            return processedResponse;
         } catch (error) {
-            console.error('❌ Error al obtener recomendaciones:', error);
-            throw error;
+            console.error('Error en Gemini API:', error);
+            if (error instanceof GeminiError) {
+                throw error;
+            }
+            throw new GeminiError('Error al obtener recomendaciones: ' + error.message);
         }
     }
 
@@ -140,29 +156,27 @@ class GeminiAPI {
         }
     }
 
-    generatePrompt(params) {
-        const { query, type, platforms = [], genre } = params;
+    buildPrompt(referencia, tipo, plataformas, genero) {
+        const tipoContenido = tipo === 'movie' ? 'películas' : 'series';
+        const plataformasDisponibles = plataformas.length > 0 ? 
+            `disponibles en ${plataformas.join(' o ')}` : 
+            'en cualquier plataforma de streaming';
+        const generoStr = genero ? ` del género ${genero}` : '';
+
+        return `Actúa como un experto en cine y series.
+        Necesito 3 recomendaciones de ${tipoContenido} similares a "${referencia}" ${plataformasDisponibles}${generoStr}.
         
-        let prompt = 'Actúa como un experto en cine y series. ';
+        Reglas:
+        1. Solo recomendar ${tipoContenido} que realmente existan
+        2. Mantener las descripciones concisas (máximo 2 líneas)
+        3. Asegurarse que el contenido esté disponible en las plataformas mencionadas
+        4. Usar exactamente este formato para cada recomendación:
         
-        if (query) {
-            prompt += `Necesito recomendaciones similares a "${query}". `;
-        }
-
-        prompt += `Quiero ${type === 'movie' ? 'películas' : 'series'} `;
+        Título: [nombre]
+        Justificación: [por qué es similar]
+        Disponible en: [plataformas]
         
-        if (genre) {
-            prompt += `del género ${genre} `;
-        }
-
-        if (platforms.length > 0) {
-            prompt += `disponibles en ${platforms.join(' o ')} `;
-        }
-
-        prompt += 'Por favor, proporciona 3 recomendaciones con el siguiente formato:\n\n';
-        prompt += '1. Título: [nombre]\nJustificación: [breve descripción y por qué es similar]\nDisponible en: [plataformas]';
-
-        return prompt;
+        No incluir texto adicional antes o después de las recomendaciones.`;
     }
 
     async makeRequest(prompt, API_KEY) {
