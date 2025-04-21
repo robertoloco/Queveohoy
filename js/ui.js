@@ -1,5 +1,5 @@
-import { PROVIDER_MAP } from './config.js';
 import { searchContentImage } from './api.js';
+import { PROVIDER_MAP } from './config.js';
 
 const PLACEHOLDER_IMAGE = 'img/placeholder.svg';
 
