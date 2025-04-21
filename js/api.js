@@ -145,7 +145,17 @@ class APIClient {
                 url += `&with_genres=${genreId}`;
             }
 
-            // Realizar la búsqueda
+            // Si hay plataformas seleccionadas, añadir el filtro
+            if (platforms.length > 0) {
+                const platformIds = platforms
+                    .map(platform => PROVIDER_MAP[platform])
+                    .filter(id => id);
+                if (platformIds.length > 0) {
+                    url += `&with_watch_providers=${platformIds.join('|')}&watch_region=ES`;
+                }
+            }
+
+            console.log('URL de búsqueda:', url);
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
@@ -181,30 +191,39 @@ class APIClient {
 // Exportar una instancia única del cliente
 export const apiClient = new APIClient();
 
+// Constantes de la API
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+
 // Función para buscar la imagen de un contenido por título
 export async function searchContentImage(title) {
     try {
         const tmdbApiKey = window.TMDB_API_KEY;
         if (!tmdbApiKey) {
-            throw new Error('API key de TMDB no encontrada');
+            console.error('API key de TMDB no encontrada');
+            return null;
         }
 
         const query = encodeURIComponent(title);
-        const response = await fetch(
-            `${TMDB_BASE_URL}/search/multi?api_key=${tmdbApiKey}&query=${query}&language=es-ES`
-        );
+        const url = `${TMDB_BASE_URL}/search/multi?api_key=${tmdbApiKey}&query=${query}&language=es-ES`;
+        
+        console.log('Buscando imagen para:', title);
+        const response = await fetch(url);
 
         if (!response.ok) {
-            throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
+            console.error(`Error en la búsqueda de TMDB: ${response.status}`);
+            return null;
         }
 
         const data = await response.json();
         if (data.results && data.results.length > 0) {
             const result = data.results[0];
             if (result.poster_path) {
-                return `https://image.tmdb.org/t/p/w500${result.poster_path}`;
+                return `${TMDB_IMAGE_BASE_URL}${result.poster_path}`;
             }
         }
+        
+        console.log('No se encontró imagen para:', title);
         return null;
     } catch (error) {
         console.error('Error al buscar imagen:', error);
@@ -240,8 +259,9 @@ export async function searchByReference(query, type = 'movie') {
         }
 
         const url = `${TMDB_BASE_URL}/search/${type}?api_key=${tmdbApiKey}&language=es-ES&query=${encodeURIComponent(query)}`;
-        const response = await fetch(url);
+        console.log('Buscando referencia:', query);
         
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Error en la búsqueda: ${response.status}`);
         }

@@ -302,7 +302,7 @@ export async function searchContentImage(title) {
     }
 }
 
-export function showGeminiRecommendations(recommendations, query) {
+export async function showGeminiRecommendations(recommendations, query) {
     const container = document.getElementById('recommendations-container');
     container.innerHTML = '';
 
@@ -313,7 +313,7 @@ export function showGeminiRecommendations(recommendations, query) {
     const grid = document.createElement('div');
     grid.className = 'recommendations-grid';
 
-    recommendations.forEach(async rec => {
+    for (const rec of recommendations) {
         const card = document.createElement('div');
         card.className = 'recommendation-card';
 
@@ -325,17 +325,21 @@ export function showGeminiRecommendations(recommendations, query) {
         img.src = 'img/placeholder.svg';
         img.alt = rec.title;
 
-        // Buscar imagen para la recomendación
-        const imageUrl = await searchContentImage(rec.title);
-        if (imageUrl) {
-            const tmdbImg = new Image();
-            tmdbImg.onload = () => {
-                img.src = imageUrl;
-            };
-            tmdbImg.onerror = (error) => {
-                console.error('Error cargando imagen:', error);
-            };
-            tmdbImg.src = imageUrl;
+        try {
+            // Buscar imagen para la recomendación
+            const imageUrl = await searchContentImage(rec.title);
+            if (imageUrl) {
+                const tmdbImg = new Image();
+                tmdbImg.onload = () => {
+                    img.src = imageUrl;
+                };
+                tmdbImg.onerror = (error) => {
+                    console.error('Error cargando imagen:', error);
+                };
+                tmdbImg.src = imageUrl;
+            }
+        } catch (error) {
+            console.error('Error al buscar imagen para:', rec.title, error);
         }
 
         imageContainer.appendChild(img);
@@ -365,7 +369,7 @@ export function showGeminiRecommendations(recommendations, query) {
 
         card.appendChild(content);
         grid.appendChild(card);
-    });
+    }
 
     container.appendChild(grid);
 }
