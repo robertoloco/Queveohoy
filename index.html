@@ -5,26 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>¿Qué veo hoy?</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2U1MDkxNCIgZD0iTTIwIDJINGMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxNmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0tOSAxM1Y5bDUgM2wtNSAzeiIvPjwvc3ZnPg==">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/platforms.css">
-<<<<<<< HEAD
-=======
     
     <!-- Scripts de configuración -->
     <script src="js/env.js"></script>
-    
-    <!-- Scripts principales -->
-    <script type="module" src="js/config.js"></script>
-    <script type="module" src="js/api.js"></script>
-    <script type="module" src="js/gemini.js"></script>
-    <script type="module" src="js/main.js"></script>
->>>>>>> parent of fb41452 (update styles)
 </head>
 <body>
     <div class="container">
-        <h1>¿Qué veo hoy?</h1>
-<<<<<<< HEAD
-        <p>Descubre qué película o serie ver según tus plataformas</p>
+        <header>
+            <h1>¿Qué veo hoy?</h1>
+            <p>Descubre qué película o serie ver según tus plataformas</p>
+        </header>
+
+        <div id="error-message" style="display: none;" class="error-message"></div>
 
         <div class="filters">
             <div class="platforms-section">
@@ -73,131 +67,38 @@
                 </div>
             </div>
 
-            <div class="content-type">
-                <select id="contentType">
-                    <option value="movie">Películas</option>
-                    <option value="tv">Series</option>
-                </select>
-                <select id="genre">
-=======
-        <div id="loading" style="display: none;">
+            <div class="content-filters">
+                <div class="content-type">
+                    <select id="contentType">
+                        <option value="movie">Películas</option>
+                        <option value="tv">Series</option>
+                    </select>
+                    <select id="genre">
+                        <option value="">Todos los géneros</option>
+                    </select>
+                </div>
+
+                <div class="actions">
+                    <button id="sorprendeme" class="action-button">¡Sorpréndeme!</button>
+                    <div class="reference-search">
+                        <input type="text" id="referenceInput" placeholder="O dime una película/serie que te guste...">
+                        <button id="searchReference" class="action-button">Recomiéndame algo similar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingMessage" class="loading-message" style="display: none;">
             <div class="loading-spinner"></div>
-            <p>Cargando...</p>
+            <p>Buscando recomendación...</p>
         </div>
 
-        <div id="error-message" style="display: none; color: red; margin: 10px 0; padding: 10px; border: 1px solid red; border-radius: 4px;"></div>
-
-        <div class="button-group">
-            <button id="btnPelicula" class="active" aria-pressed="true">Película</button>
-            <button id="btnSerie">Serie</button>
-        </div>
-
-        <div class="filters">
-            <div class="filter-group">
-                <label for="genreSelect">Género:</label>
-                <select id="genreSelect" aria-label="Seleccionar género">
->>>>>>> parent of fb41452 (update styles)
-                    <option value="">Todos los géneros</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="referenciaInput">Director o contenido que te gusta:</label>
-                <input type="text" id="referenciaInput" placeholder="Ej: Christopher Nolan, Stranger Things..." aria-label="Ingresar director o contenido de referencia">
-                <button id="buscarReferencia" class="action-button" aria-label="Buscar por referencia">
-                    Recomienda la IA
-                </button>
-            </div>
-        </div>
-
-<<<<<<< HEAD
-        <div id="recommendations"></div>
-        <div id="resultado"></div>
-=======
-        <label for="plataformas" class="sr-only">Plataformas que tienes:</label>
-        <div class="checkbox-group" id="plataformas" role="group" aria-labelledby="plataformas">
-            <label class="checkbox-icon">
-                <input type="checkbox" value="Netflix" aria-label="Netflix">
-                <div class="platform-logo logo-netflix"></div>
-                <span>Netflix</span>
-            </label>
-            <label class="checkbox-icon">
-                <input type="checkbox" value="Max" aria-label="Max">
-                <div class="platform-logo logo-max"></div>
-                <span>Max</span>
-            </label>
-            <label class="checkbox-icon">
-                <input type="checkbox" value="Disney Plus" aria-label="Disney Plus">
-                <div class="platform-logo logo-disney"></div>
-                <span>Disney+</span>
-            </label>
-            <label class="checkbox-icon">
-                <input type="checkbox" value="Amazon Prime Video" aria-label="Amazon Prime Video">
-                <div class="platform-logo logo-prime"></div>
-                <span>Prime</span>
-            </label>
-            <label class="checkbox-icon">
-                <input type="checkbox" value="Apple TV Plus" aria-label="Apple TV Plus">
-                <div class="platform-logo logo-apple"></div>
-                <span>Apple TV+</span>
-            </label>
-            <label class="checkbox-icon">
-                <input type="checkbox" value="Filmin" aria-label="Filmin">
-                <div class="platform-logo logo-filmin"></div>
-                <span>Filmin</span>
-            </label>
-            <label class="checkbox-icon">
-                <input type="checkbox" value="Movistar Plus" aria-label="Movistar Plus">
-                <div class="platform-logo logo-movistar"></div>
-                <span>Movistar+</span>
-            </label>
-            <label class="checkbox-icon">
-                <input type="checkbox" value="Crunchyroll" aria-label="Crunchyroll">
-                <div class="platform-logo logo-crunchyroll"></div>
-                <span>Crunchyroll</span>
-            </label>
-        </div>
->>>>>>> parent of fb41452 (update styles)
-
-        <div class="loading-message" id="loadingMessage">
-            Buscando recomendación...
-        </div>
-
-        <div id="resultado">
-            <!-- El contenido se mostrará aquí -->
-        </div>
-
-        <button id="botonSorpresa" class="action-button" aria-label="Obtener recomendación aleatoria">
-            ¡Sorpréndeme!
-        </button>
-
-        <div id="recommendations">
-            <!-- Las recomendaciones de la IA se mostrarán aquí -->
+        <div id="recommendations-container">
+            <div id="recommendations"></div>
+            <div id="resultado"></div>
         </div>
     </div>
 
-<<<<<<< HEAD
-    <script src="js/env.js"></script>
     <script type="module" src="js/main.js"></script>
-=======
-    <!-- Scripts -->
-    <script>
-        // Manejo de errores de carga de scripts
-        window.addEventListener('error', function(e) {
-            const errorMessage = document.getElementById('error-message');
-            if (errorMessage) {
-                errorMessage.textContent = 'Error al cargar la aplicación. Por favor, recarga la página.';
-                errorMessage.style.display = 'block';
-            }
-            console.error('Error de script:', e);
-        }, true);
-    </script>
-    <script type="module">
-        if (!window.TMDB_API_KEY || !window.GEMINI_API_KEY) {
-            const errorMessage = document.getElementById('error-message');
-            errorMessage.textContent = 'Error: No se han encontrado las claves API necesarias.';
-            errorMessage.style.display = 'block';
-        }
-    </script>
->>>>>>> parent of fb41452 (update styles)
 </body>
 </html> 
