@@ -282,7 +282,12 @@ export async function showGeminiRecommendations(recommendations, query) {
         mainContainer.insertBefore(recommendationsDiv, filters);
     }
 
-    recommendationsDiv.innerHTML = `<div class="recommendations-grid"></div>`;
+    recommendationsDiv.innerHTML = `
+        <div class="recommendations-header">
+            <h2>Recomendaciones para ti</h2>
+        </div>
+        <div class="recommendations-grid"></div>
+    `;
     const grid = recommendationsDiv.querySelector('.recommendations-grid');
 
     for (const rec of recommendations) {
@@ -292,21 +297,54 @@ export async function showGeminiRecommendations(recommendations, query) {
             const description = rec.description.replace(/^:/, '').trim();
 
             // Buscar la imagen en TMDB
+            console.log('Buscando imagen para:', title);
             const searchResult = await searchContentImage(title);
+            
+            // Construir la URL de la imagen
             const imageUrl = searchResult?.poster_path 
                 ? `https://image.tmdb.org/t/p/w500${searchResult.poster_path}`
-                : PLACEHOLDER_IMAGE;
+                : searchResult?.backdrop_path 
+                    ? `https://image.tmdb.org/t/p/w500${searchResult.backdrop_path}`
+                    : PLACEHOLDER_IMAGE;
+
+            // Construir la URL de TMDB
+            const tmdbUrl = searchResult?.id 
+                ? `https://www.themoviedb.org/${searchResult.media_type || 'movie'}/${searchResult.id}`
+                : null;
 
             const card = document.createElement('div');
             card.className = 'recommendation-card';
             card.innerHTML = `
                 <div class="recommendation-image">
-                    <img src="${imageUrl}" alt="${title}" onerror="this.src='${PLACEHOLDER_IMAGE}'">
+                    <img src="${imageUrl}" 
+                         alt="${title}" 
+                         onerror="this.src='${PLACEHOLDER_IMAGE}'"
+                         loading="lazy">
+                    ${tmdbUrl ? `
+                        <a href="${tmdbUrl}" 
+                           target="_blank" 
+                           class="tmdb-link" 
+                           title="Ver en TMDB">
+                            <span>Ver más</span>
+                        </a>
+                    ` : ''}
                 </div>
                 <div class="recommendation-info">
                     <h3>${title}</h3>
                     <p class="description">${description}</p>
-                    <p class="platforms">Disponible en: ${rec.platforms.join(', ')}</p>
+                    <div class="platforms-container">
+                        <p class="platforms">Disponible en:</p>
+                        <div class="platform-icons">
+                            ${rec.platforms.map(platform => {
+                                const platformKey = Object.keys(PROVIDER_MAP).find(key => 
+                                    platform.toLowerCase().includes(key.toLowerCase())
+                                );
+                                return platformKey 
+                                    ? `<div class="platform-logo logo-${platformKey.toLowerCase()}" title="${platform}"></div>`
+                                    : `<span class="platform-name">${platform}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
                 </div>
             `;
             grid.appendChild(card);
@@ -323,6 +361,17 @@ export async function showGeminiRecommendations(recommendations, query) {
             #recommendations {
                 margin: 2rem 0;
                 width: 100%;
+            }
+            
+            .recommendations-header {
+                padding: 0 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .recommendations-header h2 {
+                color: #fff;
+                font-size: 1.5rem;
+                font-weight: 600;
             }
             
             .recommendations-grid {
@@ -364,6 +413,24 @@ export async function showGeminiRecommendations(recommendations, query) {
                 transform: scale(1.05);
             }
             
+            .tmdb-link {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                text-decoration: none;
+                font-size: 0.8rem;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            
+            .recommendation-image:hover .tmdb-link {
+                opacity: 1;
+            }
+            
             .recommendation-info {
                 padding: 1.25rem;
             }
@@ -380,14 +447,45 @@ export async function showGeminiRecommendations(recommendations, query) {
                 color: #ccc;
                 font-size: 0.95rem;
                 line-height: 1.5;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
             }
             
-            .recommendation-info .platforms {
+            .platforms-container {
                 margin-top: 1rem;
-                color: #888;
-                font-size: 0.9rem;
                 padding-top: 0.75rem;
                 border-top: 1px solid #3a3a3a;
+            }
+            
+            .platforms {
+                color: #888;
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .platform-icons {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+            
+            .platform-logo {
+                width: 24px;
+                height: 24px;
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+            }
+            
+            .platform-name {
+                color: #ccc;
+                font-size: 0.9rem;
+                padding: 2px 6px;
+                background: #3a3a3a;
+                border-radius: 4px;
             }
             
             @media (max-width: 768px) {
@@ -399,6 +497,10 @@ export async function showGeminiRecommendations(recommendations, query) {
                 
                 .recommendation-image {
                     height: 300px;
+                }
+                
+                .recommendation-info h3 {
+                    font-size: 1.1rem;
                 }
             }
         `;
