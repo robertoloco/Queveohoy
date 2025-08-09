@@ -270,37 +270,7 @@ export function showResult(content, type) {
     document.head.appendChild(style);
 }
 
-// Función para buscar imágenes de contenido
-export async function searchContentImage(title) {
-    try {
-        const tmdbApiKey = window.TMDB_API_KEY;
-        if (!tmdbApiKey) {
-            console.error('API key de TMDB no encontrada');
-            return null;
-        }
 
-        const query = encodeURIComponent(title);
-        const response = await fetch(
-            `https://api.themoviedb.org/3/search/multi?api_key=${tmdbApiKey}&query=${query}&language=es-ES`
-        );
-
-        if (!response.ok) {
-            throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
-        }
-
-        const data = await response.json();
-        if (data.results && data.results.length > 0) {
-            const result = data.results[0];
-            if (result.poster_path) {
-                return `https://image.tmdb.org/t/p/w500${result.poster_path}`;
-            }
-        }
-        return null;
-    } catch (error) {
-        console.error('Error al buscar imagen:', error);
-        return null;
-    }
-}
 
 export function showGeminiRecommendations(recommendations, query) {
     const container = document.getElementById('recommendations');
