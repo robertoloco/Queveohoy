@@ -1,40 +1,7 @@
 // Configuración de la API
 export const API_CONFIG = {
-    // API Keys
-    get API_KEY() {
-        if (typeof window === 'undefined') {
-            console.error('❌ Error: window no está definido');
-            return '';
-        }
-        const key = window.TMDB_API_KEY;
-        if (!key) {
-            console.error('❌ Error: No se encontró la API key de TMDB');
-            const errorElement = document.getElementById('error-message');
-            if (errorElement) {
-                errorElement.textContent = 'Error: No se ha encontrado la clave API de TMDB.';
-                errorElement.style.display = 'block';
-            }
-            return '';
-        }
-        return key;
-    },
-    get GEMINI_API_KEY() {
-        if (typeof window === 'undefined') {
-            console.error('❌ Error: window no está definido');
-            return '';
-        }
-        const key = window.GEMINI_API_KEY;
-        if (!key) {
-            console.error('❌ Error: No se encontró la API key de Gemini');
-            const errorElement = document.getElementById('error-message');
-            if (errorElement) {
-                errorElement.textContent = 'Error: No se ha encontrado la clave API de Gemini.';
-                errorElement.style.display = 'block';
-            }
-            return '';
-        }
-        return key;
-    },
+    API_KEY: '6f8a752ff9858fade9e122cbe6896b63', // Reemplaza con tu clave real
+    GEMINI_API_KEY: 'AIzaSyClxwxl2y2PAlwjS7n8nSk9L2ckSIY6iG8', // Reemplaza con tu clave real
 
     // Configuración de idioma y región
     language: 'es-ES',
@@ -53,58 +20,19 @@ export const API_CONFIG = {
     // Log de configuración
     logConfig() {
         const config = {
-            hasTMDBKey: false,
-            hasGeminiKey: false,
+            hasTMDBKey: !!this.API_KEY,
+            hasGeminiKey: !!this.GEMINI_API_KEY,
             language: this.language,
             region: this.region
         };
-
-        try {
-            config.hasTMDBKey = !!this.API_KEY;
-            config.hasGeminiKey = !!this.GEMINI_API_KEY;
-            
-            console.log('🔧 Configuración de la API:', config);
-            
-            if (!config.hasTMDBKey || !config.hasGeminiKey) {
-                const errorElement = document.getElementById('error-message');
-                if (errorElement) {
-                    errorElement.textContent = 'Error: No se han encontrado todas las claves API necesarias.';
-                    errorElement.style.display = 'block';
-                }
-            }
-        } catch (error) {
-            console.error('❌ Error al verificar la configuración:', error);
-            const errorElement = document.getElementById('error-message');
-            if (errorElement) {
-                errorElement.textContent = 'Error al verificar la configuración de la API.';
-                errorElement.style.display = 'block';
-            }
-        }
+        console.log('🔧 Configuración de la API:', config);
     }
 };
 
 // Verificar configuración al cargar
-if (typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        try {
-            API_CONFIG.logConfig();
-        } catch (error) {
-            console.error('❌ Error al cargar la configuración:', error);
-            const errorElement = document.getElementById('error-message');
-            if (errorElement) {
-                errorElement.textContent = 'Error al cargar la configuración de la aplicación.';
-                errorElement.style.display = 'block';
-            }
-        }
-    });
-}
-
-// Verificar si las claves están disponibles en el objeto window
-if (typeof window !== 'undefined') {
-    console.log('🔍 Verificando claves de API en window:');
-    console.log('TMDB_API_KEY:', window.TMDB_API_KEY || 'No encontrada');
-    console.log('GEMINI_API_KEY:', window.GEMINI_API_KEY || 'No encontrada');
-}
+document.addEventListener('DOMContentLoaded', () => {
+    API_CONFIG.logConfig();
+});
 
 // Mapeo de plataformas a IDs de TMDB
 export const PROVIDER_MAP = {
