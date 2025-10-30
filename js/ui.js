@@ -107,43 +107,18 @@ export function showResult(content, type) {
     
     // Obtener las plataformas
     let platforms = 'No disponible';
-    let platformsList = [];
     
     if (content['watch/providers'] && content['watch/providers'].results) {
         const esProviders = content['watch/providers'].results.ES;
         if (esProviders) {
             if (esProviders.flatrate && esProviders.flatrate.length > 0) {
-                platformsList = esProviders.flatrate.map(provider => provider.provider_name);
-                platforms = platformsList.join(', ');
+                platforms = esProviders.flatrate.map(p => p.provider_name).join(', ');
             } else if (esProviders.rent && esProviders.rent.length > 0) {
-                platformsList = esProviders.rent.map(provider => provider.provider_name);
-                platforms = platformsList.join(', ') + ' (Alquiler)';
+                platforms = esProviders.rent.map(p => p.provider_name).join(', ') + ' (Alquiler)';
             } else if (esProviders.buy && esProviders.buy.length > 0) {
-                platformsList = esProviders.buy.map(provider => provider.provider_name);
-                platforms = platformsList.join(', ') + ' (Compra)';
+                platforms = esProviders.buy.map(p => p.provider_name).join(', ') + ' (Compra)';
             }
         }
-    }
-    
-    // Crear iconos de plataformas
-    let platformsIcons = '';
-    if (platformsList.length > 0) {
-        platformsIcons = `
-            <div class="platforms-icons">
-                ${platformsList.map(platform => {
-                    // Mapeo de nombres de TMDB a clases CSS
-                    const platformClass = platform.toLowerCase()
-                        .replace(/\s+/g, '')
-                        .replace(/\+/g, 'plus')
-                        .replace('amazon', '')
-                        .replace('video', '')
-                        .replace('primevideo', 'prime')
-                        .replace('tv', '');
-                    
-                    return `<div class="platform-logo logo-${platformClass}" title="${platform}"></div>`;
-                }).join('')}
-            </div>
-        `;
     }
     
     resultado.innerHTML = `
@@ -182,7 +157,6 @@ export function showResult(content, type) {
                     <div class="platform-badge">
                         📺 ${platforms}
                     </div>
-                    ${platformsIcons}
                 </div>
             </div>
         </div>
@@ -224,6 +198,7 @@ export function showGeminiRecommendations(recommendations, query) {
             ? `https://image.tmdb.org/t/p/w500${rec.posterPath}`
             : 'img/placeholder.svg';
         img.alt = rec.title;
+        img.loading = 'lazy';
         img.onerror = () => {
             img.src = 'img/placeholder.svg';
         };
@@ -237,6 +212,14 @@ export function showGeminiRecommendations(recommendations, query) {
         const title = document.createElement('h3');
         title.textContent = rec.title;
         content.appendChild(title);
+
+        // Agregar descripción si existe
+        if (rec.description) {
+            const description = document.createElement('p');
+            description.className = 'recommendation-description';
+            description.textContent = rec.description;
+            content.appendChild(description);
+        }
 
         if (rec.platforms && rec.platforms.length > 0) {
             const platforms = document.createElement('div');
@@ -267,7 +250,8 @@ function parseRecommendations(text) {
             currentRec = {
                 title: line.replace(/^\d+\.\s*/, '').replace(/^título:\s*/i, ''),
                 platforms: [],
-                posterPath: null
+                posterPath: null,
+                description: ''
             };
         } else if (currentRec) {
             // Buscar plataformas
@@ -277,6 +261,10 @@ function parseRecommendations(text) {
                     .split(',')
                     .map(p => p.trim())
                     .filter(p => p.length > 0);
+            }
+            // Buscar justificación
+            else if (line.toLowerCase().startsWith('justificación:')) {
+                currentRec.description = line.substring('justificación:'.length).trim();
             }
             // Buscar poster path
             else if (line.includes('posterPath:')) {
