@@ -4,7 +4,7 @@ import { API_CONFIG, PROVIDER_MAP } from './config.js';
 class GeminiAPI {
     constructor() {
         // Actualización de la URL base
-        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta2/models/gemini-pro:generateText';
+        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
         this.timeout = 10000; // 10 segundos
     }
 
@@ -118,16 +118,22 @@ class GeminiAPI {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    model: "gemini-pro",
                     contents: [{
+                        role: "user",
                         parts: [{
                             text: prompt
                         }]
+                    }],
+                    safetySettings: [{
+                        category: "HARM_CATEGORY_DANGEROUS",
+                        threshold: "BLOCK_NONE"
                     }],
                     generationConfig: {
                         temperature: 0.7,
                         topK: 32,
                         topP: 1,
-                        maxOutputTokens: 1024,
+                        maxOutputTokens: 1024
                     }
                 })
             });
