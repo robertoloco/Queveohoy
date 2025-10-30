@@ -135,6 +135,10 @@ function hideLoading() {
 }
 
 function showError(message) {
+    if (!errorMessage) {
+        console.error('Elemento error-message no encontrado en el DOM');
+        return;
+    }
     errorMessage.textContent = message;
     errorMessage.style.display = 'block';
 }

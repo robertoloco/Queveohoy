@@ -67,6 +67,8 @@ class GeminiAPI {
                     errorMessage = 'API key inválida o no autorizada';
                 } else if (response.status === 429) {
                     errorMessage = 'Se ha excedido el límite de solicitudes';
+                } else if (response.status === 400) {
+                    errorMessage = 'Solicitud malformada. Verifica el formato del cuerpo de la solicitud.';
                 } else if (errorData?.error?.message) {
                     errorMessage = errorData.error.message;
                 }
