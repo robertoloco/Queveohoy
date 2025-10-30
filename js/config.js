@@ -99,6 +99,13 @@ if (typeof document !== 'undefined') {
     });
 }
 
+// Verificar si las claves están disponibles en el objeto window
+if (typeof window !== 'undefined') {
+    console.log('🔍 Verificando claves de API en window:');
+    console.log('TMDB_API_KEY:', window.TMDB_API_KEY || 'No encontrada');
+    console.log('GEMINI_API_KEY:', window.GEMINI_API_KEY || 'No encontrada');
+}
+
 // Mapeo de plataformas a IDs de TMDB
 export const PROVIDER_MAP = {
     'Netflix': 8,
@@ -158,4 +165,4 @@ export const GENRES = {
 export const CACHE_CONFIG = {
     TTL: 3600000, // 1 hora en milisegundos
     MAX_ITEMS: 100
-}; 
+};
