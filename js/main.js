@@ -1,7 +1,12 @@
 import { getRandomContent, searchByReference } from './api.js';
-import { showLoading, hideLoading, showError, showResult, showGeminiRecommendations } from './ui.js';
+import { showResult, showGeminiRecommendations } from './ui.js';
 import { GENRES, PROVIDER_MAP } from './config.js';
 import { geminiAPI } from './gemini.js';
+
+// Constantes de la API
+const API_KEY = 'tu_api_key_de_github';
+const API_URL = 'https://api.themoviedb.org/3';
+const LANGUAGE = 'es-ES';
 
 document.addEventListener('DOMContentLoaded', () => {
     const contentType = document.getElementById('contentType');
@@ -11,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const referenceInput = document.getElementById('referenceInput');
     const recommendations = document.getElementById('recommendations');
     const resultado = document.getElementById('resultado');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const errorMessage = document.getElementById('errorMessage');
 
     // Función para alternar la visibilidad de las recomendaciones
     function toggleRecommendations(showAI = false) {
@@ -116,4 +123,18 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoading();
         }
     });
-}); 
+});
+
+// Funciones de utilidad
+function showLoading() {
+    loadingMessage.style.display = 'flex';
+}
+
+function hideLoading() {
+    loadingMessage.style.display = 'none';
+}
+
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+}
