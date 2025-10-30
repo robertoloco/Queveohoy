@@ -103,7 +103,7 @@ class GeminiAPI {
 
     async getRecommendations(reference, type, platforms = [], genre = '') {
         try {
-            const apiKey = window.GEMINI_API_KEY;
+            const apiKey = API_CONFIG.GEMINI_API_KEY; // Usar API_CONFIG para obtener la clave
             if (!apiKey) {
                 throw new Error('API key de Gemini no encontrada');
             }
@@ -221,4 +221,4 @@ export class GeminiError extends Error {
     }
 }
 
-export const geminiAPI = new GeminiAPI(); 
+export const geminiAPI = new GeminiAPI();
