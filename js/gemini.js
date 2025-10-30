@@ -118,21 +118,15 @@ class GeminiAPI {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    model: "gemini-pro",
                     contents: [{
-                        role: "user",
                         parts: [{
                             text: prompt
                         }]
                     }],
-                    safetySettings: [{
-                        category: "HARM_CATEGORY_DANGEROUS",
-                        threshold: "BLOCK_NONE"
-                    }],
                     generationConfig: {
                         temperature: 0.7,
-                        topK: 32,
-                        topP: 1,
+                        topK: 40,
+                        topP: 0.95,
                         maxOutputTokens: 1024
                     }
                 })
