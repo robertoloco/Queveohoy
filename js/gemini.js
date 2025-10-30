@@ -33,7 +33,7 @@ class GeminiAPI {
         try {
             console.log('🔍 Iniciando solicitud a Gemini API...');
             const url = `${this.baseUrl}?key=${API_KEY}`;
-            
+
             const response = await fetch(url, {
                 method: 'POST',
                 signal: controller.signal,
@@ -41,19 +41,13 @@ class GeminiAPI {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    contents: [{
-                        role: "user",
-                        parts: [{
-                            text: prompt
-                        }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 1024,
+                    prompt: {
+                        text: prompt
                     },
-                    safetySettings: []
+                    temperature: 0.7,
+                    top_k: 40,
+                    top_p: 0.95,
+                    max_output_tokens: 1024
                 })
             });
 
