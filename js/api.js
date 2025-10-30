@@ -274,4 +274,9 @@ export async function searchByReference(query, type = 'movie') {
         console.error('Error en searchByReference:', error);
         throw error;
     }
-} 
+}
+
+// Exportar la función getRandomContent para uso externo
+export async function getRandomContent(type, platforms = [], genreId = '') {
+    return apiClient.getRandomContent(type, platforms, genreId);
+}
