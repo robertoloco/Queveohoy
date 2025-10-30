@@ -130,15 +130,10 @@ class APIClient {
 
     async getRandomContent(type, platforms = [], genreId = '') {
         try {
-            const tmdbApiKey = window.TMDB_API_KEY;
-            if (!tmdbApiKey) {
-                throw new Error('API key de TMDB no encontrada');
-            }
-
             console.log('Obteniendo contenido aleatorio:', { type, platforms, genreId });
 
             // Construir la URL base
-            let url = `${TMDB_BASE_URL}/discover/${type}?api_key=${tmdbApiKey}&language=es-ES&sort_by=popularity.desc&include_adult=false&page=1`;
+            let url = `${API_CONFIG.baseUrl}/discover/${type}?api_key=${API_CONFIG.API_KEY}&language=${API_CONFIG.language}&sort_by=popularity.desc&include_adult=false&page=1`;
             
             // Añadir filtro de género si se especifica
             if (genreId) {
@@ -151,7 +146,7 @@ class APIClient {
                     .map(platform => PROVIDER_MAP[platform])
                     .filter(id => id);
                 if (platformIds.length > 0) {
-                    url += `&with_watch_providers=${platformIds.join('|')}&watch_region=ES`;
+                    url += `&with_watch_providers=${platformIds.join('|')}&watch_region=${API_CONFIG.region}`;
                 }
             }
 
@@ -171,7 +166,7 @@ class APIClient {
             const content = data.results[randomIndex];
 
             // Obtener detalles adicionales
-            const detailsUrl = `${TMDB_BASE_URL}/${type}/${content.id}?api_key=${tmdbApiKey}&language=es-ES&append_to_response=credits,watch/providers`;
+            const detailsUrl = `${API_CONFIG.baseUrl}/${type}/${content.id}?api_key=${API_CONFIG.API_KEY}&language=${API_CONFIG.language}&append_to_response=credits,watch/providers`;
             const detailsResponse = await fetch(detailsUrl);
             if (!detailsResponse.ok) {
                 throw new Error(`Error al obtener detalles: ${detailsResponse.status}`);

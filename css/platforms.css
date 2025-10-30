@@ -56,27 +56,27 @@
 
 /* Logos de plataformas */
 .logo-netflix {
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2U1MDkxNCIgZD0iTTUuMzk4IDMuMzY1djE3LjI3TDcuNjMgMjAuMlYxNy4zNWwxLjU3Mi0uNDQ1VjIwLjJsMS41NzItLjQ0NVYzLjM2NUg1LjM5OHptMTMuMjA0IDB2MTcuMjdMMTYuMzcgMjAuMlYzLjM2NWgyLjIzMnoiLz48L3N2Zz4=');
+    background-image: url('../img/netflix-logo.svg');
 }
 
 .logo-max {
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAxQTZGMCIgZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAxOGMtNC40MTEgMC04LTMuNTg5LTgtOHMzLjU4OS04IDgtOCA4IDMuNTg5IDggOC0zLjU4OSA4LTggOHoiLz48L3N2Zz4=');
+    background-image: url('../img/max-logo.svg');
 }
 
 .logo-disney {
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzFFN0RGRiIgZD0iTTIgMTJjMCA1LjUyMyA0LjQ3NyAxMCAxMCAxMHMxMC00LjQ3NyAxMC0xMFMyMi41MjMgMiAxMiAyIDIgNi40NzcgMiAxMnptMTEuNS02LjVjMi40ODUgMCA0LjUgMi4wMTUgNC41IDQuNXMtMi4wMTUgNC41LTQuNSA0LjUtNC41LTIuMDE1LTQuNS00LjUtMi4wMTUtNC41IDQuNS00LjV6Ii8+PC9zdmc+');
+    background-image: url('../img/disney-logo.svg');
 }
 
 .logo-prime {
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQThFMSIgZD0iTTIwLjE4IDEyLjM2Yy0xLjY4LTEuMjEtMy45MS0xLjg4LTYuMjgtMS44OC0yLjM3IDAtNC42LjY3LTYuMjggMS44OC0xLjY4IDEuMjEtMi42IDIuODItMi42IDQuNTJ2Mi4yNGMwIC4zOS4zMS43MS43MS43MWgxNi4zNGMuMzkgMCAuNzEtLjMyLjcxLS43MXYtMi4yNGMwLTEuNy0uOTItMy4zMS0yLjYtNC41MnoiLz48L3N2Zz4=');
+    background-image: url('../img/prime-logo.svg');
 }
 
 .logo-apple {
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTE4LjcxIDEwLjgzYy0uMjMtMi4zMiAxLjg5LTMuNTggMi0zLjYzLTEuMDktMS41OS0yLjc5LTEuOC0zLjM4LTEuODMtMS40NC0uMTUtMi44MS44NS0zLjU0Ljg1LS43MyAwLTEuODYtLjgzLTMuMDYtLjgtMS41OC4wMi0zLjAzLjkxLTMuODQgMi4zMi0xLjY0IDIuODMtLjQyIDcuMDEgMS4xNyA5LjMxLjc4IDEuMTMgMS43MSAyLjQgMi45MyAyLjM1IDEuMTgtLjA1IDEuNjItLjc2IDMuMDQtLjc2IDEuNDIgMCAxLjgyLjc2IDMuMDYuNzMgMS4yNi0uMDIgMi4wNi0xLjE0IDIuODMtMi4yNy44OS0xLjMgMS4yNi0yLjU2IDEuMjgtMi42My0uMDMtLjAxLTIuNDUtLjk0LTIuNDgtMy43M3oiLz48L3N2Zz4=');
+    background-image: url('../img/apple-logo.svg');
 }
 
 .logo-filmin {
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzAwQjM1QSIgZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAxOGMtNC40MTEgMC04LTMuNTg5LTgtOHMzLjU4OS04IDgtOCA4IDMuNTg5IDggOC0zLjU4OSA4LTggOHoiLz48L3N2Zz4=');
+    background-image: url('../img/filmin-logo.svg');
 }
 
 .logo-movistar {
@@ -101,4 +101,4 @@
 
 .logo-crunchyroll {
     background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI0Y0N0QxQSIgZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAxOGMtNC40MTEgMC04LTMuNTg5LTgtOHMzLjU4OS04IDgtOCA4IDMuNTg5IDggOC0zLjU4OSA4LTggOHoiLz48L3N2Zz4=');
-} 
+}

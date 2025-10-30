@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const recommendations = document.getElementById('recommendations');
     const resultado = document.getElementById('resultado');
     const loadingMessage = document.getElementById('loadingMessage');
-    const errorMessage = document.getElementById('errorMessage');
+    const errorMessage = document.getElementById('error-message');
 
     // Función para alternar la visibilidad de las recomendaciones
     function toggleRecommendations(showAI = false) {
