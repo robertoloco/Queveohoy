@@ -111,12 +111,27 @@ export function showResult(content, type) {
     if (content['watch/providers'] && content['watch/providers'].results) {
         const esProviders = content['watch/providers'].results.ES;
         if (esProviders) {
+            // Prioridad 1: Streaming incluido (flatrate)
             if (esProviders.flatrate && esProviders.flatrate.length > 0) {
                 platforms = esProviders.flatrate.map(p => p.provider_name).join(', ');
-            } else if (esProviders.rent && esProviders.rent.length > 0) {
-                platforms = esProviders.rent.map(p => p.provider_name).join(', ') + ' (Alquiler)';
-            } else if (esProviders.buy && esProviders.buy.length > 0) {
-                platforms = esProviders.buy.map(p => p.provider_name).join(', ') + ' (Compra)';
+            } 
+            // Prioridad 2: Alquiler (excluyendo Prime Video)
+            else if (esProviders.rent && esProviders.rent.length > 0) {
+                const rentProviders = esProviders.rent
+                    .filter(p => !p.provider_name.toLowerCase().includes('prime'))
+                    .map(p => p.provider_name);
+                if (rentProviders.length > 0) {
+                    platforms = rentProviders.join(', ') + ' (Alquiler)';
+                }
+            } 
+            // Prioridad 3: Compra (excluyendo Prime Video)
+            else if (esProviders.buy && esProviders.buy.length > 0) {
+                const buyProviders = esProviders.buy
+                    .filter(p => !p.provider_name.toLowerCase().includes('prime'))
+                    .map(p => p.provider_name);
+                if (buyProviders.length > 0) {
+                    platforms = buyProviders.join(', ') + ' (Compra)';
+                }
             }
         }
     }
