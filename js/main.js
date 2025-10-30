@@ -1,10 +1,11 @@
-import { getRandomContent, searchByReference } from './api.js';
+import { getRandomContent } from './api.js';
 import { showResult, showGeminiRecommendations } from './ui.js';
 import { GENRES, PROVIDER_MAP } from './config.js';
 import { geminiAPI } from './gemini.js';
 
 // Obtener referencias a elementos del DOM
 const errorMessageElement = document.getElementById('error-message');
+const loadingMessage = document.getElementById('loadingMessage');
 
 // Función para mostrar errores
 function showError(message) {
@@ -13,6 +14,19 @@ function showError(message) {
         errorMessageElement.style.display = 'block';
     } else {
         console.error('Error:', message);
+    }
+}
+
+// Funciones de utilidad para loading
+function showLoading() {
+    if (loadingMessage) {
+        loadingMessage.style.display = 'flex';
+    }
+}
+
+function hideLoading() {
+    if (loadingMessage) {
+        loadingMessage.style.display = 'none';
     }
 }
 
@@ -132,12 +146,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-// Funciones de utilidad
-function showLoading() {
-    loadingMessage.style.display = 'flex';
-}
-
-function hideLoading() {
-    loadingMessage.style.display = 'none';
-}

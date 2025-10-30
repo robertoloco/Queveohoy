@@ -54,35 +54,39 @@
     text-align: center;
 }
 
-/* Corrección de rutas de logos */
+/* Logos de plataformas usando TMDB */
 .logo-netflix {
-    background-image: url('../img/netflix-logo.svg');
+    background-image: url('https://images.justwatch.com/icon/190848813/s100/netflix.webp');
 }
 
 .logo-max {
-    background-image: url('../img/max-logo.svg');
+    background-image: url('https://images.justwatch.com/icon/305458112/s100/max.webp');
 }
 
+.logo-disneyplus,
 .logo-disney {
-    background-image: url('../img/disney-logo.svg');
+    background-image: url('https://images.justwatch.com/icon/147638351/s100/disney-plus.webp');
 }
 
+.logo-amazonprimevideo,
 .logo-prime {
-    background-image: url('../img/prime-logo.svg');
+    background-image: url('https://images.justwatch.com/icon/52449861/s100/amazon-prime-video.webp');
 }
 
+.logo-appletvplus,
 .logo-apple {
-    background-image: url('../img/apple-logo.svg');
+    background-image: url('https://images.justwatch.com/icon/190848813/s100/apple-tv-plus.webp');
 }
 
 .logo-filmin {
-    background-image: url('../img/filmin-logo.svg');
+    background-image: url('https://images.justwatch.com/icon/305239081/s100/filmin.webp');
 }
 
+.logo-movistarplus,
 .logo-movistar {
-    background-image: url('../img/movistar-logo.svg');
+    background-image: url('https://images.justwatch.com/icon/128599720/s100/movistar-plus.webp');
 }
 
 .logo-crunchyroll {
-    background-image: url('../img/crunchyroll-logo.svg');
+    background-image: url('https://images.justwatch.com/icon/304346398/s100/crunchyroll.webp');
 }

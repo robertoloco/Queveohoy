@@ -1,4 +1,3 @@
-import { searchContentImage } from './api.js';
 import { PROVIDER_MAP } from './config.js';
 
 const PLACEHOLDER_IMAGE = 'img/placeholder.svg';
@@ -130,14 +129,18 @@ export function showResult(content, type) {
     let platformsIcons = '';
     if (platformsList.length > 0) {
         platformsIcons = `
-            <div class="platforms-icons" style="margin-top: 20px;">
+            <div class="platforms-icons" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                 ${platformsList.map(platform => {
-                    const platformKey = Object.keys(PROVIDER_MAP).find(key => 
-                        key && platform.includes(key)
-                    );
-                    return platformKey 
-                        ? `<div class="platform-logo logo-${platformKey.toLowerCase().replace(/\s+/g, '').replace(/\+/g, '')}" title="${platform}"></div>`
-                        : '';
+                    // Mapeo de nombres de TMDB a clases CSS
+                    const platformClass = platform.toLowerCase()
+                        .replace(/\s+/g, '')
+                        .replace(/\+/g, 'plus')
+                        .replace('amazon', '')
+                        .replace('video', '')
+                        .replace('primevideo', 'prime')
+                        .replace('tv', '');
+                    
+                    return `<div class="platform-logo logo-${platformClass}" title="${platform}"></div>`;
                 }).join('')}
             </div>
         `;

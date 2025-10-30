@@ -104,7 +104,7 @@ class GeminiAPI {
 
     async getRecommendations(reference, type, platforms = [], genre = '') {
         try {
-            const apiKey = API_CONFIG.GEMINI_API_KEY; // Usar API_CONFIG para obtener la clave
+            const apiKey = window.GEMINI_API_KEY || API_CONFIG.GEMINI_API_KEY;
             if (!apiKey) {
                 throw new Error('API key de Gemini no encontrada');
             }
@@ -150,7 +150,7 @@ class GeminiAPI {
             }
 
             const text = data.candidates[0].content.parts[0].text;
-            return this._parseRecommendations(text);
+            return await this._parseRecommendations(text, type);
         } catch (error) {
             console.error('Error al obtener recomendaciones:', error);
             throw error;
@@ -178,7 +178,7 @@ Asegúrate de que:
 - No repitas la misma recomendación`;
     }
 
-    _parseRecommendations(text) {
+    async _parseRecommendations(text, type) {
         console.log('Parseando texto de recomendaciones:', text);
         const recommendations = [];
         const lines = text.split('\n');
@@ -188,15 +188,16 @@ Asegúrate de que:
             const trimmedLine = line.trim();
             if (!trimmedLine) continue;
 
-            // Detectar nuevo título (número seguido de punto o solo el título)
-            if (/^\d+\./.test(trimmedLine) || (!currentRec && !trimmedLine.toLowerCase().startsWith('disponible') && !trimmedLine.toLowerCase().startsWith('justificación'))) {
+            // Detectar nuevo título (número seguido de punto)
+            if (/^\d+\./.test(trimmedLine)) {
                 if (currentRec) {
                     recommendations.push(currentRec);
                 }
                 currentRec = {
-                    title: trimmedLine.replace(/^\d+\.\s*/, ''),
+                    title: trimmedLine.replace(/^\d+\.\s*/, '').replace(/\*\*/g, '').trim(),
                     platforms: [],
-                    description: ''
+                    description: '',
+                    posterPath: null
                 };
             } else if (currentRec) {
                 if (trimmedLine.toLowerCase().startsWith('disponible en:')) {
@@ -215,8 +216,29 @@ Asegúrate de que:
             recommendations.push(currentRec);
         }
 
-        console.log('Recomendaciones parseadas:', recommendations);
-        return recommendations;
+        // Buscar imágenes para cada recomendación
+        const enrichedRecommendations = await Promise.all(
+            recommendations.map(async (rec) => {
+                try {
+                    const searchType = type === 'movie' ? 'movie' : 'tv';
+                    const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${API_CONFIG.API_KEY}&language=${API_CONFIG.language}&query=${encodeURIComponent(rec.title)}`;
+                    const response = await fetch(searchUrl);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.results && data.results.length > 0) {
+                            rec.posterPath = data.results[0].poster_path;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`No se pudo obtener imagen para ${rec.title}:`, error);
+                }
+                return rec;
+            })
+        );
+
+        console.log('Recomendaciones enriquecidas:', enrichedRecommendations);
+        return enrichedRecommendations;
     }
 }
 
