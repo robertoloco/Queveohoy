@@ -41,13 +41,17 @@ class GeminiAPI {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    prompt: {
-                        text: prompt
-                    },
-                    temperature: 0.7,
-                    top_k: 40,
-                    top_p: 0.95,
-                    max_output_tokens: 1024
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        topK: 40,
+                        topP: 0.95,
+                        maxOutputTokens: 1024
+                    }
                 })
             });
 
@@ -152,13 +156,13 @@ class GeminiAPI {
         const platformsList = platforms.length > 0 ? platforms.join(', ') : 'cualquier plataforma';
         const genreText = genre ? ` del género ${genre}` : '';
 
-        return `Actúa como un experto en cine y series. Necesito 3 recomendaciones de ${contentType}s similares a "${reference}" disponibles en ${platformsList}${genreText}. 
+        return `Actúa como un experto en cine y series. Necesito 5 recomendaciones de ${contentType}s similares a "${reference}" disponibles en ${platformsList}${genreText}. 
 
-Por favor, proporciona las recomendaciones en el siguiente formato para cada una:
+Por favor, proporciona las recomendaciones siguiendo EXACTAMENTE este formato para cada una (es muy importante mantener el formato para poder procesarlo correctamente):
 
-1. [Título]
-Disponible en: [plataformas]
-Justificación: [breve explicación de por qué es similar]
+1. [Título de la película/serie]
+Disponible en: [Nombre exacto de la(s) plataforma(s) donde está disponible]
+Justificación: [Explicación concisa de por qué es similar en términos de género, trama, estilo o tono]
 
 Asegúrate de que:
 - Las recomendaciones sean realmente similares en tono, estilo o temática

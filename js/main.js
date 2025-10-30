@@ -3,10 +3,18 @@ import { showResult, showGeminiRecommendations } from './ui.js';
 import { GENRES, PROVIDER_MAP } from './config.js';
 import { geminiAPI } from './gemini.js';
 
-// Constantes de la API
-const API_KEY = 'tu_api_key_de_github';
-const API_URL = 'https://api.themoviedb.org/3';
-const LANGUAGE = 'es-ES';
+// Obtener referencias a elementos del DOM
+const errorMessageElement = document.getElementById('error-message');
+
+// Función para mostrar errores
+function showError(message) {
+    if (errorMessageElement) {
+        errorMessageElement.textContent = message;
+        errorMessageElement.style.display = 'block';
+    } else {
+        console.error('Error:', message);
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const contentType = document.getElementById('contentType');
