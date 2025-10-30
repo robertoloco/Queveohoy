@@ -3,104 +3,11 @@ import { API_CONFIG, PROVIDER_MAP } from './config.js';
 // Clase para manejar las solicitudes a la API de Gemini
 class GeminiAPI {
     constructor() {
-        // Actualización de la URL base
-        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
-        this.timeout = 10000; // 10 segundos
+        // URL base con modelo estable
+        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        this.timeout = 30000; // 30 segundos para Gemini
     }
 
-    validateApiKey() {
-        console.log('🔑 Validando API key de Gemini...');
-        const API_KEY = window.GEMINI_API_KEY;
-        
-        if (!API_KEY) {
-            console.error('❌ API key de Gemini no encontrada');
-            throw new GeminiError('API key de Gemini no encontrada', 'INVALID_API_KEY');
-        }
-        
-        if (typeof API_KEY !== 'string' || API_KEY.trim() === '') {
-            console.error('❌ API key de Gemini inválida');
-            throw new GeminiError('API key de Gemini inválida', 'INVALID_API_KEY');
-        }
-
-        console.log('✅ API key de Gemini validada');
-        return API_KEY;
-    }
-
-    async makeRequest(prompt, API_KEY) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-        try {
-            console.log('🔍 Iniciando solicitud a Gemini API...');
-            const url = `${this.baseUrl}?key=${API_KEY}`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                signal: controller.signal,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 1024
-                    }
-                })
-            });
-
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                console.error('Error en la respuesta:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    errorData
-                });
-
-                let errorMessage = 'Error desconocido al contactar el API';
-                
-                if (response.status === 401) {
-                    errorMessage = 'API key inválida o no autorizada';
-                } else if (response.status === 429) {
-                    errorMessage = 'Se ha excedido el límite de solicitudes';
-                } else if (response.status === 400) {
-                    errorMessage = 'Solicitud malformada. Verifica el formato del cuerpo de la solicitud.';
-                } else if (errorData?.error?.message) {
-                    errorMessage = errorData.error.message;
-                }
-                
-                throw new GeminiError(errorMessage, 'API_ERROR');
-            }
-
-            const data = await response.json();
-            console.log('✅ Respuesta recibida:', data);
-            return data;
-
-        } catch (error) {
-            console.error('❌ Error en makeRequest:', error);
-            
-            if (error.name === 'AbortError') {
-                throw new GeminiError('La solicitud excedió el tiempo límite', 'TIMEOUT');
-            }
-            
-            if (error instanceof GeminiError) {
-                throw error;
-            }
-
-            throw new GeminiError(
-                `Error al hacer la solicitud: ${error.message}`,
-                'REQUEST_ERROR'
-            );
-        }
-    }
 
     async getRecommendations(reference, type, platforms = [], genre = '') {
         try {
@@ -112,28 +19,39 @@ class GeminiAPI {
             console.log('Solicitando recomendaciones:', { reference, type, platforms, genre });
 
             const prompt = this._buildPrompt(reference, type, platforms, genre);
-            const response = await fetch(`${this.baseUrl}?key=${apiKey}`, {
+            const response = await fetch(this.baseUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-goog-api-key': apiKey
                 },
                 body: JSON.stringify({
                     contents: [{
                         parts: [{
                             text: prompt
                         }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 1024
-                    }
+                    }]
                 })
             });
 
             if (!response.ok) {
-                throw new Error(`Error en la API de Gemini: ${response.status}`);
+                const errorData = await response.json().catch(() => null);
+                console.error('❌ Error de Gemini API:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorData
+                });
+                
+                let errorMessage = `Error ${response.status}`;
+                if (response.status === 404) {
+                    errorMessage = 'Modelo no encontrado. Verifica que el modelo esté disponible.';
+                } else if (response.status === 401 || response.status === 403) {
+                    errorMessage = 'API key inválida o sin permisos.';
+                } else if (errorData?.error?.message) {
+                    errorMessage = errorData.error.message;
+                }
+                
+                throw new Error(errorMessage);
             }
 
             const data = await response.json();
