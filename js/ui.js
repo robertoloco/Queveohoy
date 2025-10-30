@@ -187,8 +187,7 @@ export function showResult(content, type) {
             </div>
         </div>
     `;
-
-
+}
 
 export function showGeminiRecommendations(recommendations, query) {
     const container = document.getElementById('recommendations');
