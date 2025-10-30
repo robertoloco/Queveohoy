@@ -129,7 +129,7 @@ export function showResult(content, type) {
     let platformsIcons = '';
     if (platformsList.length > 0) {
         platformsIcons = `
-            <div class="platforms-icons" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <div class="platforms-icons">
                 ${platformsList.map(platform => {
                     // Mapeo de nombres de TMDB a clases CSS
                     const platformClass = platform.toLowerCase()
@@ -147,99 +147,39 @@ export function showResult(content, type) {
     }
     
     resultado.innerHTML = `
-        <div class="content-card" style="
-            background-color: #2a2a2a;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            margin: 0 auto;
-            display: flex;
-            flex-direction: row;
-            max-width: 1200px;
-        ">
-            <div class="poster-container" style="
-                flex: 0 0 auto;
-                width: 300px;
-                position: relative;
-                background: #1a1a1a;
-            ">
+        <div class="content-card">
+            <div class="poster-container">
                 <img src="${imageUrl}" 
                      alt="${content.title || content.name}" 
-                     style="width: 100%; height: 100%; object-fit: cover;">
+                     loading="lazy">
             </div>
-            <div class="content-info" style="
-                flex: 1;
-                padding: 25px;
-                display: flex;
-                flex-direction: column;
-            ">
-                <h2 style="
-                    color: #fff;
-                    margin: 0 0 15px 0;
-                    font-size: 1.8em;
-                ">
-                    <a href="${tmdbUrl}" 
-                       target="_blank" 
-                       style="
-                           color: inherit;
-                           text-decoration: none;
-                           transition: color 0.2s ease;
-                       "
-                       onmouseover="this.style.color='#e50914'"
-                       onmouseout="this.style.color='inherit'"
-                    >${content.title || content.name}</a>
+            <div class="content-info">
+                <h2>
+                    <a href="${tmdbUrl}" target="_blank" rel="noopener">${content.title || content.name}</a>
                 </h2>
                 
-                <div style="
-                    display: flex;
-                    gap: 20px;
-                    margin-bottom: 20px;
-                    color: #aaa;
-                    font-size: 1em;
-                ">
-                    <span>⭐ ${content.vote_average?.toFixed(1) || 'N/A'}</span>
+                <div class="metadata">
+                    <span class="rating">⭐ ${content.vote_average?.toFixed(1) || 'N/A'}</span>
                     <span>📅 ${year}</span>
                     ${durationInfo ? `<span>⏱️ ${durationInfo}</span>` : ''}
                 </div>
 
-                <p style="
-                    color: #ccc;
-                    margin: 0 0 20px 0;
-                    font-size: 1em;
-                    line-height: 1.6;
-                ">${content.overview || 'No hay descripción disponible.'}</p>
+                <p class="overview">${content.overview || 'No hay descripción disponible.'}</p>
 
-                <div style="margin-bottom: 20px;">
-                    <p style="margin: 10px 0; color: #fff;"><strong>Género:</strong> <span style="color: #ccc;">${genres}</span></p>
-                    <p style="margin: 10px 0; color: #fff;">
+                <div class="details">
+                    <p><strong>Género:</strong> <span class="muted">${genres}</span></p>
+                    <p>
                         <strong>Director:</strong> 
                         ${directorUrl 
-                            ? `<a href="${directorUrl}" 
-                                 target="_blank" 
-                                 style="
-                                     color: #ccc;
-                                     text-decoration: none;
-                                     transition: color 0.2s ease;
-                                 "
-                                 onmouseover="this.style.color='#e50914'"
-                                 onmouseout="this.style.color='#ccc'"
-                               >${director}</a>`
-                            : `<span style="color: #ccc;">${director}</span>`
+                            ? `<a href="${directorUrl}" target="_blank" rel="noopener" class="link-muted">${director}</a>`
+                            : `<span class="muted">${director}</span>`
                         }
                     </p>
                 </div>
 
-                <div style="margin-top: auto;">
-                    <p style="margin: 10px 0; color: #fff;"><strong>Disponible en:</strong></p>
-                    <div style="
-                        display: inline-block;
-                        padding: 10px 15px;
-                        background: #e50914;
-                        color: white;
-                        border-radius: 6px;
-                        font-weight: 500;
-                        margin-top: 10px;
-                    ">
+                <div class="platforms-info">
+                    <p><strong>Disponible en:</strong></p>
+                    <div class="platform-badge">
                         📺 ${platforms}
                     </div>
                     ${platformsIcons}
@@ -247,31 +187,6 @@ export function showResult(content, type) {
             </div>
         </div>
     `;
-
-    // Añadir media queries para móvil
-    const style = document.createElement('style');
-    style.textContent = `
-        @media (max-width: 768px) {
-            .content-card {
-                flex-direction: column !important;
-            }
-            .poster-container {
-                width: 100% !important;
-                height: 300px !important;
-            }
-            .content-info {
-                padding: 20px !important;
-            }
-            .content-info h2 {
-                font-size: 1.5em !important;
-            }
-            .platforms-icons {
-                flex-wrap: wrap;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-}
 
 
 
@@ -378,65 +293,3 @@ function parseRecommendations(text) {
     console.log('Recomendaciones procesadas:', recommendations);
     return recommendations;
 }
-
-// Estilos
-const styles = `
-.recommendation-card {
-    background: #2a2a2a;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    padding: 16px;
-    margin: 8px;
-    display: flex;
-    flex-direction: column;
-}
-
-.recommendation-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.recommendation-content h3 {
-    color: #ffffff;
-    margin: 0 0 12px 0;
-    font-size: 1.2em;
-}
-
-.recommendation-content p {
-    color: #cccccc;
-    margin: 0 0 16px 0;
-    line-height: 1.5;
-}
-
-.platforms {
-    margin-top: auto;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.platform-icon {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-}
-
-.recommendations-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
-
-@media (max-width: 768px) {
-    .recommendation-card {
-        margin: 8px 0;
-    }
-}
-`;
-
-// Inyectar los estilos
-const styleSheet = document.createElement('style');
-styleSheet.textContent = styles;
-document.head.appendChild(styleSheet);

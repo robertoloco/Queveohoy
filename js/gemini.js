@@ -74,7 +74,7 @@ class GeminiAPI {
         const platformsList = platforms.length > 0 ? platforms.join(', ') : 'cualquier plataforma';
         const genreText = genre ? ` del género ${genre}` : '';
 
-        return `Actúa como un experto en cine y series. Necesito 5 recomendaciones de ${contentType}s similares a "${reference}" disponibles en ${platformsList}${genreText}. 
+        return `Actúa como un experto en cine y series. Necesito 3 recomendaciones de ${contentType}s similares a "${reference}" disponibles en ${platformsList}${genreText}.
 
 Por favor, proporciona las recomendaciones siguiendo EXACTAMENTE este formato para cada una (es muy importante mantener el formato para poder procesarlo correctamente):
 
