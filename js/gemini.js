@@ -1,42 +1,34 @@
 import { API_CONFIG, PROVIDER_MAP } from './config.js';
 
-// Clase para manejar las solicitudes a la API de Gemini
+// Clase para manejar las solicitudes a la API de Gemini a través de Netlify Functions
 class GeminiAPI {
     constructor() {
-        // URL base con modelo estable (verificado que existe)
-        this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-        this.timeout = 30000; // 30 segundos para Gemini
+        // URL de la función de Netlify (funciona tanto en local como en producción)
+        this.baseUrl = '/.netlify/functions/recommendations';
+        this.timeout = 30000; // 30 segundos
     }
 
 
     async getRecommendations(reference, type, platforms = [], genre = '') {
         try {
-            const apiKey = window.GEMINI_API_KEY || API_CONFIG.GEMINI_API_KEY;
-            if (!apiKey) {
-                throw new Error('API key de Gemini no encontrada');
-            }
+            console.log('🚀 Solicitando recomendaciones a Netlify Function:', { reference, type, platforms, genre });
 
-            console.log('Solicitando recomendaciones:', { reference, type, platforms, genre });
-
-            const prompt = this._buildPrompt(reference, type, platforms, genre);
             const response = await fetch(this.baseUrl, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': apiKey
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }]
+                    reference,
+                    type,
+                    platforms,
+                    genre
                 })
             });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                console.error('❌ Error de Gemini API:', {
+                console.error('❌ Error de Netlify Function:', {
                     status: response.status,
                     statusText: response.statusText,
                     errorData
@@ -44,90 +36,32 @@ class GeminiAPI {
                 
                 let errorMessage = `Error ${response.status}`;
                 if (response.status === 404) {
-                    errorMessage = 'Modelo no encontrado. Verifica que el modelo esté disponible.';
-                } else if (response.status === 401 || response.status === 403) {
-                    errorMessage = 'API key inválida o sin permisos.';
-                } else if (errorData?.error?.message) {
-                    errorMessage = errorData.error.message;
+                    errorMessage = 'Función no encontrada. Verifica que Netlify esté configurado correctamente.';
+                } else if (response.status === 500) {
+                    errorMessage = errorData?.error || 'Error del servidor. Intenta de nuevo.';
+                } else if (errorData?.error) {
+                    errorMessage = errorData.error;
                 }
                 
                 throw new Error(errorMessage);
             }
 
             const data = await response.json();
-            console.log('Respuesta de Gemini:', data);
+            console.log(data.cached ? '✅ Recomendaciones desde caché' : '🆕 Recomendaciones nuevas generadas');
 
-            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                throw new Error('Formato de respuesta inválido de Gemini');
+            if (!data.recommendations || data.recommendations.length === 0) {
+                throw new Error('No se recibieron recomendaciones');
             }
 
-            const text = data.candidates[0].content.parts[0].text;
-            return await this._parseRecommendations(text, type);
+            // Enriquecer con imágenes de TMDB
+            return await this._enrichWithImages(data.recommendations, type);
         } catch (error) {
             console.error('Error al obtener recomendaciones:', error);
             throw error;
         }
     }
 
-    _buildPrompt(reference, type, platforms, genre) {
-        const contentType = type === 'movie' ? 'película' : 'serie';
-        const platformsList = platforms.length > 0 ? platforms.join(', ') : 'cualquier plataforma';
-        const genreText = genre ? ` del género ${genre}` : '';
-
-        return `Actúa como un experto en cine y series. Necesito 3 recomendaciones de ${contentType}s similares a "${reference}" disponibles en ${platformsList}${genreText}.
-
-Por favor, proporciona las recomendaciones siguiendo EXACTAMENTE este formato para cada una (es muy importante mantener el formato para poder procesarlo correctamente):
-
-1. [Título de la película/serie]
-Disponible en: [Nombre exacto de la(s) plataforma(s) donde está disponible]
-Justificación: [Explicación concisa de por qué es similar en términos de género, trama, estilo o tono]
-
-Asegúrate de que:
-- Las recomendaciones sean realmente similares en tono, estilo o temática
-- Estén disponibles en las plataformas mencionadas
-- La justificación sea concisa pero informativa
-- No incluyas spoilers
-- No repitas la misma recomendación`;
-    }
-
-    async _parseRecommendations(text, type) {
-        console.log('Parseando texto de recomendaciones:', text);
-        const recommendations = [];
-        const lines = text.split('\n');
-        let currentRec = null;
-
-        for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) continue;
-
-            // Detectar nuevo título (número seguido de punto)
-            if (/^\d+\./.test(trimmedLine)) {
-                if (currentRec) {
-                    recommendations.push(currentRec);
-                }
-                currentRec = {
-                    title: trimmedLine.replace(/^\d+\.\s*/, '').replace(/\*\*/g, '').trim(),
-                    platforms: [],
-                    description: '',
-                    posterPath: null
-                };
-            } else if (currentRec) {
-                if (trimmedLine.toLowerCase().startsWith('disponible en:')) {
-                    currentRec.platforms = trimmedLine
-                        .substring('disponible en:'.length)
-                        .split(',')
-                        .map(p => p.trim())
-                        .filter(p => p);
-                } else if (trimmedLine.toLowerCase().startsWith('justificación:')) {
-                    currentRec.description = trimmedLine.substring('justificación:'.length).trim();
-                }
-            }
-        }
-
-        if (currentRec) {
-            recommendations.push(currentRec);
-        }
-
+    async _enrichWithImages(recommendations, type) {
         // Buscar imágenes para cada recomendación
         const enrichedRecommendations = await Promise.all(
             recommendations.map(async (rec) => {
@@ -149,7 +83,7 @@ Asegúrate de que:
             })
         );
 
-        console.log('Recomendaciones enriquecidas:', enrichedRecommendations);
+        console.log('Recomendaciones enriquecidas con imágenes:', enrichedRecommendations);
         return enrichedRecommendations;
     }
 }
