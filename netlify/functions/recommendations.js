@@ -92,7 +92,7 @@ Asegúrate de que:
 
     // Llamar a Gemini API
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
       {
         method: 'POST',
         headers: {
@@ -112,6 +112,11 @@ Asegúrate de que:
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       console.error('Gemini API error:', errorData);
+      
+      if (response.status === 429) {
+        throw new Error('Límite de peticiones excedido. Intenta de nuevo en unos minutos o usa la caché.');
+      }
+      
       throw new Error(`Gemini API error: ${response.status}`);
     }
 
