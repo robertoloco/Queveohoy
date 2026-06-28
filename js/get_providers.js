@@ -1,5 +1,5 @@
 // Script para obtener los proveedores de TMDB
-const API_KEY = '6f8a752ff9858fade9e122cbe6896b63';
+const API_KEY = window.TMDB_API_KEY;
 
 async function getProviders() {
     try {

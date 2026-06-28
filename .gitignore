@@ -24,6 +24,7 @@ build/
 
 # Archivos de configuración local
 config.js
+js/env.js
 
 # Archivos del sistema
 .DS_Store

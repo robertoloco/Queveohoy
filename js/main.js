@@ -1,148 +1,262 @@
-import { getRandomContent } from './api.js';
-import { showResult, showGeminiRecommendations } from './ui.js';
-import { GENRES, PROVIDER_MAP } from './config.js';
-import { geminiAPI } from './gemini.js';
-
-// Obtener referencias a elementos del DOM
-const errorMessageElement = document.getElementById('error-message');
-const loadingMessage = document.getElementById('loadingMessage');
-
-// Función para mostrar errores
-function showError(message) {
-    if (errorMessageElement) {
-        errorMessageElement.textContent = message;
-        errorMessageElement.style.display = 'block';
-    } else {
-        console.error('Error:', message);
-    }
-}
-
-// Funciones de utilidad para loading
-function showLoading() {
-    if (loadingMessage) {
-        loadingMessage.style.display = 'flex';
-    }
-}
-
-function hideLoading() {
-    if (loadingMessage) {
-        loadingMessage.style.display = 'none';
-    }
-}
+import { apiClient } from './api.js';
+import { showResult, showRecommendations, showLoading, hideLoading, showError, showEngineStatus, showCandidatesCount } from './ui.js';
+import { GENRES } from './config.js';
+import { recommendationEngine } from './gemini.js';
+import { ollamaAPI } from './ollama.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    const contentType = document.getElementById('contentType');
-    const genre = document.getElementById('genre');
-    const sorprendeme = document.getElementById('sorprendeme');
-    const searchReference = document.getElementById('searchReference');
-    const referenceInput = document.getElementById('referenceInput');
-    const recommendations = document.getElementById('recommendations');
-    const resultado = document.getElementById('resultado');
-    const loadingMessage = document.getElementById('loadingMessage');
-    const errorMessage = document.getElementById('error-message');
+  const contentType = document.getElementById('contentType');
+  const genre = document.getElementById('genre');
+  const yearMin = document.getElementById('yearMin');
+  const ratingMin = document.getElementById('ratingMin');
+  const sorprendeme = document.getElementById('sorprendeme');
+  const searchReference = document.getElementById('searchReference');
+  const referenceInput = document.getElementById('referenceInput');
+  const recommendations = document.getElementById('recommendations');
+  const resultado = document.getElementById('resultado');
+  const errorMessage = document.getElementById('error-message');
+  const engineSelect = document.getElementById('engineSelect');
 
-    // Función para alternar la visibilidad de las recomendaciones
-    function toggleRecommendations(showAI = false) {
-        if (showAI) {
-            recommendations.style.display = 'block';
-            resultado.style.display = 'none';
-        } else {
-            recommendations.style.display = 'none';
-            resultado.style.display = 'block';
-        }
+  const savedEngine = localStorage.getItem('recommendationEngine');
+  if (savedEngine && engineSelect) {
+    engineSelect.value = savedEngine;
+  }
+
+  function getEngine() {
+    return engineSelect ? engineSelect.value : 'ollama';
+  }
+
+  function saveEngine() {
+    if (engineSelect) {
+      localStorage.setItem('recommendationEngine', engineSelect.value);
     }
+  }
 
-    // Cargar géneros en el select
-    function cargarGeneros() {
-        genre.innerHTML = '<option value="">Todos los géneros</option>';
-        const generos = contentType.value === 'movie' ? GENRES.movie : GENRES.tv;
-        
-        generos.forEach(genero => {
-            const option = document.createElement('option');
-            option.value = genero.id;
-            option.textContent = genero.name;
-            genre.appendChild(option);
-        });
+  if (engineSelect) {
+    engineSelect.addEventListener('change', saveEngine);
+  }
+
+  referenceInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchReference.click();
+  });
+
+  function clearError() {
+    if (errorMessage) {
+      errorMessage.style.display = 'none';
+      errorMessage.textContent = '';
     }
+  }
 
-    // Manejo de botones de plataforma
-    const platformLabels = document.querySelectorAll('.checkbox-icon');
-    platformLabels.forEach(label => {
+  function toggleRecommendations(showAI = false) {
+    recommendations.style.display = showAI ? 'block' : 'none';
+    resultado.style.display = showAI ? 'none' : 'block';
+  }
+
+  function cargarGeneros() {
+    genre.innerHTML = '<option value="">Todos los géneros</option>';
+    const generos = contentType.value === 'movie' ? GENRES.movie : GENRES.tv;
+    generos.forEach(genero => {
+      const option = document.createElement('option');
+      option.value = genero.id;
+      option.textContent = genero.name;
+      genre.appendChild(option);
+    });
+  }
+
+  const platformLabels = document.querySelectorAll('.checkbox-icon');
+  platformLabels.forEach(label => {
+    const checkbox = label.querySelector('input[type="checkbox"]');
+    label.addEventListener('click', (e) => {
+      if (e.target !== checkbox) {
+        e.preventDefault();
+        checkbox.checked = !checkbox.checked;
+      }
+      label.classList.toggle('selected', checkbox.checked);
+      savePlatformSelection();
+    });
+  });
+
+  function savePlatformSelection() {
+    const selected = [];
+    document.querySelectorAll('.checkbox-icon input[type="checkbox"]:checked').forEach(cb => {
+      selected.push(cb.value);
+    });
+    localStorage.setItem('selectedPlatforms', JSON.stringify(selected));
+  }
+
+  function restorePlatformSelection() {
+    const saved = localStorage.getItem('selectedPlatforms');
+    if (!saved) return;
+    try {
+      const selected = JSON.parse(saved);
+      document.querySelectorAll('.checkbox-icon').forEach(label => {
         const checkbox = label.querySelector('input[type="checkbox"]');
-        label.addEventListener('click', (e) => {
-            if (e.target !== checkbox) {
-                e.preventDefault();
-                checkbox.checked = !checkbox.checked;
-            }
-            label.classList.toggle('selected', checkbox.checked);
-        });
+        if (selected.includes(checkbox.value)) {
+          checkbox.checked = true;
+          label.classList.add('selected');
+        }
+      });
+    } catch { /* ignore */ }
+  }
+
+  function addSelectAllButtons() {
+    const platformSection = document.querySelector('.platforms-section');
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'platform-actions';
+
+    const selectAll = document.createElement('button');
+    selectAll.textContent = 'Seleccionar todo';
+    selectAll.className = 'platform-action-btn';
+    selectAll.addEventListener('click', () => {
+      document.querySelectorAll('.checkbox-icon').forEach(label => {
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        checkbox.checked = true;
+        label.classList.add('selected');
+      });
+      savePlatformSelection();
     });
 
-    // Obtener plataformas seleccionadas
-    function getSelectedPlatforms() {
-        return Array.from(document.querySelectorAll('.checkbox-icon input[type="checkbox"]'))
-            .filter(checkbox => checkbox.checked)
-            .map(checkbox => checkbox.value);
+    const clearAll = document.createElement('button');
+    clearAll.textContent = 'Deseleccionar todo';
+    clearAll.className = 'platform-action-btn';
+    clearAll.addEventListener('click', () => {
+      document.querySelectorAll('.checkbox-icon').forEach(label => {
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        checkbox.checked = false;
+        label.classList.remove('selected');
+      });
+      savePlatformSelection();
+    });
+
+    btnGroup.appendChild(selectAll);
+    btnGroup.appendChild(clearAll);
+    platformSection.appendChild(btnGroup);
+  }
+
+  function getSelectedPlatforms() {
+    return Array.from(document.querySelectorAll('.checkbox-icon input[type="checkbox"]'))
+      .filter(cb => cb.checked)
+      .map(cb => cb.value);
+  }
+
+  restorePlatformSelection();
+  addSelectAllButtons();
+  cargarGeneros();
+  contentType.addEventListener('change', cargarGeneros);
+
+  sorprendeme.addEventListener('click', async () => {
+    try {
+      clearError();
+      showLoading();
+      toggleRecommendations(false);
+
+      const selectedPlatforms = getSelectedPlatforms();
+      const content = await apiClient.getRandomContent(
+        contentType.value,
+        selectedPlatforms,
+        genre.value,
+        yearMin.value,
+        ratingMin.value
+      );
+      showResult(content, contentType.value);
+    } catch (error) {
+      showError(error.message || 'Error al obtener contenido aleatorio');
+    } finally {
+      hideLoading();
+    }
+  });
+
+  searchReference.addEventListener('click', async () => {
+    const reference = referenceInput.value.trim();
+    if (!reference) {
+      showError('Por favor, ingresa una película o serie de referencia');
+      return;
     }
 
-    // Cargar géneros iniciales
-    cargarGeneros();
+    try {
+      clearError();
+      showLoading();
 
-    // Event listener para cambio de tipo de contenido
-    contentType.addEventListener('change', cargarGeneros);
+      const engine = getEngine();
+      const selectedPlatforms = getSelectedPlatforms();
 
-    // Event listener para el botón de sorpresa
-    sorprendeme.addEventListener('click', async () => {
+      showEngineStatus(engine, 'Buscando candidatos en TMDB...');
+
+      const candidates = await recommendationEngine.buildCandidates(
+        reference,
+        contentType.value,
+        selectedPlatforms,
+        genre.value,
+        yearMin.value,
+        ratingMin.value
+      );
+
+      if (candidates.length === 0) {
+        throw new Error('No se encontraron candidatos en TMDB con los filtros indicados.');
+      }
+
+      showCandidatesCount(candidates.length);
+
+      let result;
+      if (engine === 'ollama') {
+        showEngineStatus(engine, 'Consultando Ollama local...');
         try {
-            showLoading();
-            toggleRecommendations(false);
-            
-            const selectedPlatforms = getSelectedPlatforms();
-            console.log('Plataformas seleccionadas:', selectedPlatforms);
-            
-            const content = await getRandomContent(
-                contentType.value,
-                selectedPlatforms,
-                genre.value
+          result = await ollamaAPI.getRecommendations(
+            reference,
+            contentType.value,
+            selectedPlatforms,
+            genre.value,
+            yearMin.value,
+            ratingMin.value,
+            candidates
+          );
+        } catch (err) {
+          if (err.message.includes('Ollama') || err.message.includes('fetch')) {
+            throw new Error(
+              'No se pudo conectar con el servidor local de Ollama.\n\n' +
+              'Para usar el modo local gratuito:\n' +
+              '1. Instala Ollama: https://ollama.com\n' +
+              '2. Descarga el modelo: ollama pull llama3.2:3b\n' +
+              '3. Inicia el servidor: node local-llm-server.mjs\n\n' +
+              'O cambia al motor "Gemini/Netlify fallback" en el selector.'
             );
-            
-            showResult(content, contentType.value);
-        } catch (error) {
-            console.error('Error al obtener contenido aleatorio:', error);
-            showError(error.message || 'Error al obtener recomendaciones');
-        } finally {
-            hideLoading();
+          }
+          throw err;
         }
-    });
+      } else {
+        showEngineStatus(engine, 'Consultando Gemini via Netlify...');
+        result = await recommendationEngine.getGeminiRecommendations(
+          reference,
+          contentType.value,
+          selectedPlatforms,
+          genre.value,
+          yearMin.value,
+          ratingMin.value
+        );
+      }
 
-    // Event listener para la búsqueda por referencia
-    searchReference.addEventListener('click', async () => {
-        try {
-            const reference = referenceInput.value.trim();
-            if (!reference) {
-                throw new Error('Por favor, ingresa una película o serie de referencia');
-            }
+      const { recommendations: recs, provider, model, cached } = result;
 
-            showLoading();
-            toggleRecommendations(true);
-            
-            const selectedPlatforms = getSelectedPlatforms();
-            console.log('Buscando recomendaciones para:', reference);
-            console.log('Plataformas seleccionadas:', selectedPlatforms);
-            
-            const recommendations = await geminiAPI.getRecommendations(
-                reference,
-                contentType.value,
-                selectedPlatforms,
-                genre.value
-            );
-            
-            showGeminiRecommendations(recommendations, reference);
-        } catch (error) {
-            console.error('Error al buscar recomendaciones:', error);
-            showError(error.message || 'Error al obtener recomendaciones');
-        } finally {
-            hideLoading();
-        }
-    });
+      if (!recs || recs.length === 0) {
+        throw new Error('No se recibieron recomendaciones del motor.');
+      }
+
+      const enriched = recs.map(rec => {
+        const match = candidates.find(
+          c => c.title.toLowerCase() === rec.title.toLowerCase()
+        );
+        return match ? { ...rec, ...match } : rec;
+      });
+
+      toggleRecommendations(true);
+      showRecommendations(enriched, reference, provider || engine, model, cached);
+      showEngineStatus(provider || engine, 'Listo: recomendaciones generadas con candidatos reales de TMDB.');
+
+    } catch (error) {
+      toggleRecommendations(true);
+      showError(error.message || 'Error al obtener recomendaciones');
+    } finally {
+      hideLoading();
+    }
+  });
 });

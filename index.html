@@ -9,15 +9,27 @@
     <link rel="stylesheet" href="css/platforms.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>¿Qué veo hoy?</h1>
-            <p>Descubre qué película o serie ver según tus plataformas</p>
-        </header>
+    <div class="hero">
+        <h1><span class="accent">¿Qué veo</span> hoy?</h1>
+        <p>Descubre películas y series según tus plataformas</p>
+        <p class="sub">Recomendaciones validadas contra TMDB y plataformas disponibles en España</p>
+    </div>
 
-        <div id="error-message" style="display: none;" class="error-message"></div>
+    <div class="container">
+        <div id="error-message" class="error-message"></div>
 
         <div class="filters">
+            <div class="filters-header">
+                <label>Filtros</label>
+                <div class="engine-selector">
+                    <label for="engineSelect">Motor de recomendación:</label>
+                    <select id="engineSelect">
+                        <option value="ollama">Local gratis (Ollama)</option>
+                        <option value="gemini">Gemini / Netlify fallback</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="platforms-section">
                 <div class="platform-grid">
                     <label class="checkbox-icon">
@@ -72,17 +84,28 @@
                     <select id="genre">
                         <option value="">Todos los géneros</option>
                     </select>
+                    <input type="number" id="yearMin" class="filter-input" placeholder="Año mín. (ej: 2000)" min="1900" max="2030">
+                    <select id="ratingMin" class="filter-select">
+                        <option value="">Rating mín.</option>
+                        <option value="5">≥ 5</option>
+                        <option value="6">≥ 6</option>
+                        <option value="7">≥ 7</option>
+                        <option value="8">≥ 8</option>
+                    </select>
                 </div>
 
                 <div class="actions">
-                    <button id="sorprendeme" class="action-button">¡Sorpréndeme!</button>
+                    <button id="sorprendeme" class="action-button action-button-secondary">¡Sorpréndeme!</button>
                     <div class="reference-search">
-                        <input type="text" id="referenceInput" placeholder="O dime una película/serie que te guste...">
-                        <button id="searchReference" class="action-button">Recomiéndame algo similar</button>
+                        <input type="text" id="referenceInput" placeholder="Dime una película o serie que te guste...">
+                        <button id="searchReference" class="action-button">Recomiéndame</button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div id="engineStatus"></div>
+        <div id="candidatesCount"></div>
 
         <div id="loadingMessage" class="loading-message" style="display: none;">
             <div class="loading-spinner"></div>
@@ -90,12 +113,16 @@
         </div>
 
         <div id="recommendations-container">
-            <div id="recommendations"></div>
+            <div id="recommendations" style="display: none;"></div>
             <div id="resultado"></div>
         </div>
     </div>
 
-    <script src="js/env.js"></script>
-    <script type="module" src="js/main.js"></script>
+    <footer class="app-footer">
+        <p>Recomendaciones vía TMDB · Plataformas disponibles en España · <a href="https://developer.themoviedb.org" target="_blank" rel="noopener">TMDB API</a></p>
+    </footer>
+
+    <script src="js/env.js?v=20260628c"></script>
+    <script type="module" src="js/main.js?v=20260628c"></script>
 </body>
 </html>

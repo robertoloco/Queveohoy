@@ -1,7 +1,7 @@
 // Configuración de la API
 export const API_CONFIG = {
-    API_KEY: '6f8a752ff9858fade9e122cbe6896b63', // API de TMDB (solo para buscar imágenes)
-    // GEMINI_API_KEY movida a variables de entorno de Netlify por seguridad
+    API_KEY: window.TMDB_API_KEY || '',
+    // GEMINI_API_KEY configurada en variables de entorno de Netlify por seguridad
 
     // Configuración de idioma y región
     language: 'es-ES',

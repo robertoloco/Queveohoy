@@ -3,295 +3,246 @@ import { PROVIDER_MAP } from './config.js';
 const PLACEHOLDER_IMAGE = 'img/placeholder.svg';
 
 async function loadImage(url) {
-    try {
-        const img = new Image();
-        const promise = new Promise((resolve, reject) => {
-            img.onload = () => resolve(url);
-            img.onerror = () => reject(new Error(`Error cargando imagen: ${url}`));
-        });
-        img.src = url;
-        return await promise;
-    } catch (error) {
-        console.error('Error cargando imagen:', error);
-        return PLACEHOLDER_IMAGE;
-    }
+  try {
+    const img = new Image();
+    const promise = new Promise((resolve, reject) => {
+      img.onload = () => resolve(url);
+      img.onerror = () => reject(new Error('Error cargando imagen'));
+    });
+    img.src = url;
+    return await promise;
+  } catch {
+    return PLACEHOLDER_IMAGE;
+  }
 }
 
 async function getThumbnailUrl(content) {
-    try {
-        if (!content.poster_path && !content.backdrop_path) {
-            throw new Error('No hay imagen disponible');
-        }
-        const basePath = 'https://image.tmdb.org/t/p/w500';
-        const imagePath = content.poster_path || content.backdrop_path;
-        return await loadImage(`${basePath}${imagePath}`);
-    } catch (error) {
-        console.warn('Error obteniendo thumbnail:', error);
-        return PLACEHOLDER_IMAGE;
-    }
+  try {
+    if (!content.poster_path && !content.backdrop_path) throw new Error('No hay imagen');
+    const basePath = 'https://image.tmdb.org/t/p/w500';
+    const imagePath = content.poster_path || content.backdrop_path;
+    return await loadImage(`${basePath}${imagePath}`);
+  } catch {
+    return PLACEHOLDER_IMAGE;
+  }
 }
 
 export function showLoading() {
-    const loadingMessage = document.getElementById('loadingMessage');
-    if (loadingMessage) {
-        loadingMessage.style.display = 'block';
-    }
+  const el = document.getElementById('loadingMessage');
+  if (el) el.style.display = 'flex';
 }
 
 export function hideLoading() {
-    const loadingMessage = document.getElementById('loadingMessage');
-    if (loadingMessage) {
-        loadingMessage.style.display = 'none';
-    }
+  const el = document.getElementById('loadingMessage');
+  if (el) el.style.display = 'none';
 }
 
 export function showError(message) {
-    const resultado = document.getElementById('resultado');
-    if (resultado) {
-        resultado.innerHTML = `
-            <div class="error-message">
-                <p>${message}</p>
-            </div>
-        `;
-    }
+  const el = document.getElementById('error-message');
+  const recContainer = document.getElementById('recommendations');
+  if (el) {
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+  if (recContainer) recContainer.innerHTML = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+export function showEngineStatus(engine, message) {
+  const el = document.getElementById('engineStatus');
+  if (!el) return;
+  const label = engine === 'ollama' ? 'Local (Ollama)' : 'Gemini';
+  el.innerHTML = `<span class="engine-badge engine-${engine}">${label}</span> ${message}`;
+  el.style.display = 'block';
+}
+
+export function showCandidatesCount(count) {
+  const el = document.getElementById('candidatesCount');
+  if (!el) return;
+  el.textContent = `Se encontraron ${count} candidatos en TMDB`;
+  el.style.display = 'block';
 }
 
 export function showResult(content, type) {
-    const resultado = document.getElementById('resultado');
-    
-    // Obtener la URL de la imagen
-    const imageUrl = content.poster_path 
-        ? `https://image.tmdb.org/t/p/w500${content.poster_path}`
-        : 'https://via.placeholder.com/500x750?text=No+Image';
-    
-    // Obtener el año
-    const year = (content.release_date || content.first_air_date || '').substring(0, 4) || 'N/A';
-    
-    // Obtener la duración o temporadas
-    let durationInfo = '';
-    if (type === 'movie') {
-        const runtime = content.runtime;
-        if (runtime) {
-            const hours = Math.floor(runtime / 60);
-            const minutes = runtime % 60;
-            durationInfo = hours > 0 
-                ? `${hours}h ${minutes}m` 
-                : `${minutes}m`;
-        }
-    } else {
-        const seasons = content.number_of_seasons;
-        if (seasons) {
-            durationInfo = `${seasons} ${seasons === 1 ? 'temporada' : 'temporadas'}`;
-        }
+  const resultado = document.getElementById('resultado');
+  const imageUrl = content.poster_path
+    ? `https://image.tmdb.org/t/p/w500${content.poster_path}`
+    : 'img/placeholder.svg';
+
+  const year = (content.release_date || content.first_air_date || '').substring(0, 4) || 'N/A';
+
+  let durationInfo = '';
+  if (type === 'movie') {
+    const runtime = content.runtime;
+    if (runtime) {
+      const hours = Math.floor(runtime / 60);
+      const minutes = runtime % 60;
+      durationInfo = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
     }
-    
-    // Obtener el director y su ID
-    let director = 'No disponible';
-    let directorId = null;
-    if (content.credits && content.credits.crew) {
-        const directorInfo = content.credits.crew.find(person => person.job === 'Director');
-        if (directorInfo) {
-            director = directorInfo.name;
-            directorId = directorInfo.id;
-        }
+  } else {
+    const seasons = content.number_of_seasons;
+    if (seasons) {
+      durationInfo = `${seasons} ${seasons === 1 ? 'temporada' : 'temporadas'}`;
     }
+  }
 
-    // Crear enlaces a TMDB
-    const tmdbUrl = `https://www.themoviedb.org/${type}/${content.id}`;
-    const directorUrl = directorId ? `https://www.themoviedb.org/person/${directorId}` : null;
-    
-    // Obtener los géneros
-    const genres = content.genres 
-        ? content.genres.map(genre => genre.name).join(', ') 
-        : 'No disponible';
-    
-    // Obtener las plataformas
-    let platforms = 'No disponible';
-    
-    if (content['watch/providers'] && content['watch/providers'].results) {
-        const esProviders = content['watch/providers'].results.ES;
-        if (esProviders) {
-            // Prioridad 1: Streaming incluido (flatrate)
-            if (esProviders.flatrate && esProviders.flatrate.length > 0) {
-                platforms = esProviders.flatrate.map(p => p.provider_name).join(', ');
-            } 
-            // Prioridad 2: Alquiler (excluyendo Prime Video)
-            else if (esProviders.rent && esProviders.rent.length > 0) {
-                const rentProviders = esProviders.rent
-                    .filter(p => !p.provider_name.toLowerCase().includes('prime'))
-                    .map(p => p.provider_name);
-                if (rentProviders.length > 0) {
-                    platforms = rentProviders.join(', ') + ' (Alquiler)';
-                }
-            } 
-            // Prioridad 3: Compra (excluyendo Prime Video)
-            else if (esProviders.buy && esProviders.buy.length > 0) {
-                const buyProviders = esProviders.buy
-                    .filter(p => !p.provider_name.toLowerCase().includes('prime'))
-                    .map(p => p.provider_name);
-                if (buyProviders.length > 0) {
-                    platforms = buyProviders.join(', ') + ' (Compra)';
-                }
-            }
-        }
+  let director = 'No disponible';
+  let directorId = null;
+  if (content.credits && content.credits.crew) {
+    const d = content.credits.crew.find(p => p.job === 'Director');
+    if (d) { director = d.name; directorId = d.id; }
+  }
+
+  const tmdbUrl = `https://www.themoviedb.org/${type}/${content.id}`;
+  const directorUrl = directorId ? `https://www.themoviedb.org/person/${directorId}` : null;
+  const genres = content.genres ? content.genres.map(g => g.name).join(', ') : 'No disponible';
+
+  let platforms = 'No disponible';
+  if (content['watch/providers'] && content['watch/providers'].results) {
+    const es = content['watch/providers'].results.ES;
+    if (es) {
+      if (es.flatrate && es.flatrate.length > 0) {
+        platforms = es.flatrate.map(p => p.provider_name).join(', ');
+      } else if (es.rent && es.rent.length > 0) {
+        platforms = es.rent.filter(p => !p.provider_name.toLowerCase().includes('prime')).map(p => p.provider_name).join(', ') + ' (Alquiler)';
+      } else if (es.buy && es.buy.length > 0) {
+        platforms = es.buy.filter(p => !p.provider_name.toLowerCase().includes('prime')).map(p => p.provider_name).join(', ') + ' (Compra)';
+      }
     }
-    
-    resultado.innerHTML = `
-        <div class="content-card">
-            <div class="poster-container">
-                <img src="${imageUrl}" 
-                     alt="${content.title || content.name}" 
-                     loading="lazy">
-            </div>
-            <div class="content-info">
-                <h2>
-                    <a href="${tmdbUrl}" target="_blank" rel="noopener">${content.title || content.name}</a>
-                </h2>
-                
-                <div class="metadata">
-                    <span class="rating">⭐ ${content.vote_average?.toFixed(1) || 'N/A'}</span>
-                    <span>📅 ${year}</span>
-                    ${durationInfo ? `<span>⏱️ ${durationInfo}</span>` : ''}
-                </div>
+  }
 
-                <p class="overview">${content.overview || 'No hay descripción disponible.'}</p>
-
-                <div class="details">
-                    <p><strong>Género:</strong> <span class="muted">${genres}</span></p>
-                    <p>
-                        <strong>Director:</strong> 
-                        ${directorUrl 
-                            ? `<a href="${directorUrl}" target="_blank" rel="noopener" class="link-muted">${director}</a>`
-                            : `<span class="muted">${director}</span>`
-                        }
-                    </p>
-                </div>
-
-                <div class="platforms-info">
-                    <p><strong>Disponible en:</strong></p>
-                    <div class="platform-badge">
-                        📺 ${platforms}
-                    </div>
-                </div>
-            </div>
+  resultado.innerHTML = `
+    <div class="content-card">
+      <div class="poster-container">
+        <img src="${imageUrl}" alt="${content.title || content.name}" loading="lazy">
+      </div>
+      <div class="content-info">
+        <h2><a href="${tmdbUrl}" target="_blank" rel="noopener">${content.title || content.name}</a></h2>
+        <div class="metadata">
+          <span class="rating">★ ${content.vote_average?.toFixed(1) || 'N/A'}</span>
+          <span>${year}</span>
+          ${durationInfo ? `<span>${durationInfo}</span>` : ''}
         </div>
-    `;
+        <p class="overview">${content.overview || 'No hay descripción disponible.'}</p>
+        <div class="details">
+          <p><strong>Género:</strong> <span class="muted">${genres}</span></p>
+          <p><strong>Director:</strong> ${directorUrl ? `<a href="${directorUrl}" target="_blank" rel="noopener" class="link-muted">${director}</a>` : `<span class="muted">${director}</span>`}</p>
+        </div>
+        <div class="platforms-info">
+          <p><strong>Disponible en:</strong></p>
+          <div class="platform-badge">${platforms}</div>
+        </div>
+      </div>
+    </div>`;
 }
 
-export function showGeminiRecommendations(recommendations, query) {
-    const container = document.getElementById('recommendations');
-    container.innerHTML = '';
+export function showRecommendations(recs, query, provider, model, cached) {
+  const container = document.getElementById('recommendations');
+  container.innerHTML = '';
 
-    // Agregar título basado en la consulta
-    const title = document.createElement('h2');
-    title.textContent = `Recomendaciones basadas en "${query}"`;
-    container.appendChild(title);
+  const title = document.createElement('h2');
+  title.textContent = `Recomendaciones basadas en "${query}"`;
+  container.appendChild(title);
 
-    // Crear contenedor de grid para las recomendaciones
-    const grid = document.createElement('div');
-    grid.className = 'recommendations-grid';
-    container.appendChild(grid);
+  const badge = document.createElement('div');
+  badge.className = 'engine-info';
+  const modelLabel = model ? ` · ${model}` : '';
+  const cacheLabel = cached ? ' (en caché)' : '';
+  badge.innerHTML = `<span class="engine-badge engine-${provider}">${provider === 'ollama' ? 'Local gratis' : 'Gemini'}</span> Generado con ${provider}${modelLabel}${cacheLabel}`;
+  container.appendChild(badge);
 
-    // Procesar las recomendaciones si vienen como texto
-    const processedRecommendations = typeof recommendations === 'string' 
-        ? parseRecommendations(recommendations) 
-        : recommendations;
+  const grid = document.createElement('div');
+  grid.className = 'recommendations-grid';
+  container.appendChild(grid);
 
-    if (!processedRecommendations || processedRecommendations.length === 0) {
-        throw new Error('No se pudieron procesar las recomendaciones');
+  const seen = new Set();
+  const unique = [];
+  for (const r of recs) {
+    const key = r.title ? r.title.toLowerCase() : '';
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      unique.push(r);
+    }
+  }
+
+  unique.forEach(rec => {
+    const card = document.createElement('div');
+    card.className = 'recommendation-card';
+
+    const imgContainer = document.createElement('div');
+    imgContainer.className = 'recommendation-image';
+
+    const img = document.createElement('img');
+    img.src = rec.posterPath
+      ? `https://image.tmdb.org/t/p/w500${rec.posterPath}`
+      : 'img/placeholder.svg';
+    img.alt = rec.title || '';
+    img.loading = 'lazy';
+    img.onerror = () => { img.src = 'img/placeholder.svg'; };
+
+    imgContainer.appendChild(img);
+    card.appendChild(imgContainer);
+
+    const content = document.createElement('div');
+    content.className = 'recommendation-content';
+
+    const titleRow = document.createElement('div');
+    titleRow.className = 'rec-title-row';
+
+    const titleEl = document.createElement('h3');
+    titleEl.textContent = rec.title || 'Título desconocido';
+    titleRow.appendChild(titleEl);
+
+    if (rec.year) {
+      const yearEl = document.createElement('span');
+      yearEl.className = 'rec-year';
+      yearEl.textContent = rec.year;
+      titleRow.appendChild(yearEl);
     }
 
-    processedRecommendations.forEach(rec => {
-        const card = document.createElement('div');
-        card.className = 'recommendation-card';
-
-        const imageContainer = document.createElement('div');
-        imageContainer.className = 'recommendation-image';
-
-        const img = document.createElement('img');
-        img.src = rec.posterPath 
-            ? `https://image.tmdb.org/t/p/w500${rec.posterPath}`
-            : 'img/placeholder.svg';
-        img.alt = rec.title;
-        img.loading = 'lazy';
-        img.onerror = () => {
-            img.src = 'img/placeholder.svg';
-        };
-
-        imageContainer.appendChild(img);
-        card.appendChild(imageContainer);
-
-        const content = document.createElement('div');
-        content.className = 'recommendation-content';
-
-        const title = document.createElement('h3');
-        title.textContent = rec.title;
-        content.appendChild(title);
-
-        // Agregar descripción si existe
-        if (rec.description) {
-            const description = document.createElement('p');
-            description.className = 'recommendation-description';
-            description.textContent = rec.description;
-            content.appendChild(description);
-        }
-
-        if (rec.platforms && rec.platforms.length > 0) {
-            const platforms = document.createElement('div');
-            platforms.className = 'platforms';
-            platforms.textContent = rec.platforms.join(', ');
-            content.appendChild(platforms);
-        }
-
-        card.appendChild(content);
-        grid.appendChild(card);
-    });
-}
-
-function parseRecommendations(text) {
-    const lines = text.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-
-    const recommendations = [];
-    let currentRec = null;
-
-    for (const line of lines) {
-        // Si la línea comienza con un número o "Título:", es una nueva recomendación
-        if (/^\d+\./.test(line) || line.toLowerCase().startsWith('título:')) {
-            if (currentRec) {
-                recommendations.push(currentRec);
-            }
-            currentRec = {
-                title: line.replace(/^\d+\.\s*/, '').replace(/^título:\s*/i, ''),
-                platforms: [],
-                posterPath: null,
-                description: ''
-            };
-        } else if (currentRec) {
-            // Buscar plataformas
-            if (line.toLowerCase().includes('disponible en:')) {
-                const platformsText = line.split(':')[1];
-                currentRec.platforms = platformsText
-                    .split(',')
-                    .map(p => p.trim())
-                    .filter(p => p.length > 0);
-            }
-            // Buscar justificación
-            else if (line.toLowerCase().startsWith('justificación:')) {
-                currentRec.description = line.substring('justificación:'.length).trim();
-            }
-            // Buscar poster path
-            else if (line.includes('posterPath:')) {
-                currentRec.posterPath = line.split(':')[1].trim();
-            }
-        }
+    if (rec.voteAverage) {
+      const ratingEl = document.createElement('span');
+      ratingEl.className = 'rec-rating';
+      ratingEl.textContent = `★ ${Number(rec.voteAverage).toFixed(1)}`;
+      titleRow.appendChild(ratingEl);
     }
 
-    if (currentRec) {
-        recommendations.push(currentRec);
+    content.appendChild(titleRow);
+
+    if (rec.verified !== undefined) {
+      const badge = document.createElement('span');
+      badge.className = rec.verified ? 'verified-badge' : 'unverified-badge';
+      badge.textContent = rec.verified ? '✓ Verificado en tus plataformas' : '? No verificado en tus plataformas';
+      content.appendChild(badge);
     }
 
-    console.log('Recomendaciones procesadas:', recommendations);
-    return recommendations;
+    const desc = rec.description || rec.reason || rec.overview || '';
+    if (desc) {
+      const p = document.createElement('p');
+      p.className = 'recommendation-description';
+      p.textContent = desc;
+      content.appendChild(p);
+    }
+
+    const platformsArr = rec.actualPlatforms && rec.actualPlatforms.length > 0
+      ? rec.actualPlatforms
+      : (rec.platforms && rec.platforms.length > 0 ? rec.platforms : null);
+    if (platformsArr) {
+      const plat = document.createElement('div');
+      plat.className = 'platforms';
+      plat.textContent = platformsArr.join(', ');
+      content.appendChild(plat);
+    }
+
+    card.appendChild(content);
+    grid.appendChild(card);
+  });
+
+  const verifiedCount = unique.filter(r => r.verified).length;
+  if (verifiedCount > 0 && verifiedCount < unique.length) {
+    const note = document.createElement('p');
+    note.className = 'verification-note';
+    note.textContent = `${verifiedCount} de ${unique.length} recomendaciones verificadas como disponibles en tus plataformas.`;
+    container.appendChild(note);
+  }
 }

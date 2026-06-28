@@ -25,7 +25,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { reference, type, platforms, genre } = JSON.parse(event.body);
+    const { reference, type, platforms, genre, yearMin, ratingMin } = JSON.parse(event.body);
 
     // Validar parámetros
     if (!reference || !type) {
@@ -36,7 +36,7 @@ exports.handler = async (event, context) => {
     }
 
     // Crear clave de caché
-    const cacheKey = `${reference}-${type}-${(platforms || []).join(',')}-${genre || ''}`;
+    const cacheKey = `${reference}-${type}-${(platforms || []).join(',')}-${genre || ''}-${yearMin || ''}-${ratingMin || ''}`;
     
     // Verificar caché
     if (cache.has(cacheKey)) {
@@ -70,25 +70,42 @@ exports.handler = async (event, context) => {
 
     // Construir el prompt
     const contentType = type === 'movie' ? 'película' : 'serie';
+    const contentTypePlural = type === 'movie' ? 'películas' : 'series';
     const platformsList = (platforms && platforms.length > 0) 
       ? platforms.join(', ') 
       : 'cualquier plataforma';
     const genreText = genre ? ` del género ${genre}` : '';
+    const yearText = yearMin ? `, estrenadas a partir de ${yearMin}` : '';
+    const ratingText = ratingMin ? `, con calificación mínima de ${ratingMin}/10` : '';
 
-    const prompt = `Actúa como un experto en cine y series. Necesito 3 recomendaciones de ${contentType}s similares a "${reference}" disponibles en ${platformsList}${genreText}.
+    const prompt = `Eres un crítico de cine y series con 20 años de experiencia. Recomienda contenido que EXISTE realmente.
 
-Por favor, proporciona las recomendaciones siguiendo EXACTAMENTE este formato para cada una (es muy importante mantener el formato para poder procesarlo correctamente):
+Necesito exactamente 5 recomendaciones de ${contentTypePlural} similares a "${reference}", disponibles en ${platformsList}${genreText}${yearText}${ratingText}.
 
-1. [Título de la película/serie]
-Disponible en: [Nombre exacto de la(s) plataforma(s) donde está disponible]
-Justificación: [Explicación concisa de por qué es similar en términos de género, trama, estilo o tono]
+REGLAS ESTRICTAS:
+1. Solo recomienda contenido real y existente (verificado en TMDB).
+2. Las plataformas indicadas deben ser correctas para España (ES).
+3. Prioriza contenido con calificación alta (7/10 o superior).
+4. No repitas la misma recomendación.
+5. Diversidad: intenta variar entre opciones conocidas y joyas ocultas.
+6. NO incluyas spoilers.
+7. Si "${reference}" tiene varias temporadas o es una franquicia, no recomiendes otras partes de la misma franquicia a menos que sean significativamente diferentes.
 
-Asegúrate de que:
-- Las recomendaciones sean realmente similares en tono, estilo o temática
-- Estén disponibles en las plataformas mencionadas
-- La justificación sea concisa pero informativa
-- No incluyas spoilers
-- No repitas la misma recomendación`;
+Formato EXACTO (obligatorio):
+
+1. [Título exacto de la ${contentType}]
+Disponible en: [Plataforma(s) exacta(s) donde está disponible en España]
+Justificación: [2-3 frases explicando por qué es similar en tono, trama o estilo]
+
+Ejemplo de formato correcto:
+1. The Shawshank Redemption
+Disponible en: Netflix, Max
+Justificación: Al igual que tu referencia, esta película explora temas de redención y esperanza con actuaciones memorables.
+
+Ejemplo de formato INCORRECTO (NO USAR):
+Título: The Shawshank Redemption
+Plataforma: Netflix
+Explicación: ...`;
 
     // Llamar a Gemini API
     const response = await fetch(

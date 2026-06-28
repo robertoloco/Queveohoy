@@ -85,8 +85,7 @@ class APIClient {
             ...params
         });
 
-        const url = `${API_CONFIG.baseUrl}${endpoint}?${queryParams}`;
-        const cacheKey = url;
+        const cacheKey = `${API_CONFIG.baseUrl}${endpoint}?${queryParams}`;
 
         // Intentar obtener de caché
         const cachedData = cache.get(cacheKey);
@@ -95,7 +94,7 @@ class APIClient {
         }
 
         // Si no está en caché, hacer la petición
-        const data = await this._makeRequest(url);
+        const data = await this._makeRequest(endpoint, params);
         
         // Guardar en caché
         cache.set(cacheKey, data);
@@ -128,9 +127,21 @@ class APIClient {
         });
     }
 
-    async getRandomContent(type, platforms = [], genreId = '') {
+    async getRecommendations(tmdbId, type, page = 1) {
+        const data = await this._makeRequest(`/${type}/${tmdbId}/recommendations`, { page });
+        if (data.results && data.results.length > 0) return data.results;
+        const similar = await this._makeRequest(`/${type}/${tmdbId}/similar`, { page });
+        return similar.results || [];
+    }
+
+    async getSimilar(tmdbId, type, page = 1) {
+        const data = await this._makeRequest(`/${type}/${tmdbId}/similar`, { page });
+        return data.results || [];
+    }
+
+    async getRandomContent(type, platforms = [], genreId = '', yearMin = '', ratingMin = '') {
         try {
-            console.log('Obteniendo contenido aleatorio:', { type, platforms, genreId });
+            console.log('Obteniendo contenido aleatorio:', { type, platforms, genreId, yearMin, ratingMin });
 
             // Construir la URL base
             let url = `${API_CONFIG.baseUrl}/discover/${type}?api_key=${API_CONFIG.API_KEY}&language=${API_CONFIG.language}&sort_by=popularity.desc&include_adult=false&page=1`;
@@ -138,6 +149,17 @@ class APIClient {
             // Añadir filtro de género si se especifica
             if (genreId) {
                 url += `&with_genres=${genreId}`;
+            }
+
+            // Añadir filtro de año mínimo
+            if (yearMin) {
+                const dateField = type === 'movie' ? 'primary_release_date.gte' : 'first_air_date.gte';
+                url += `&${dateField}=${yearMin}-01-01`;
+            }
+
+            // Añadir filtro de rating mínimo
+            if (ratingMin) {
+                url += `&vote_average.gte=${ratingMin}`;
             }
 
             // Si hay plataformas seleccionadas, añadir el filtro
@@ -150,7 +172,7 @@ class APIClient {
                 }
             }
 
-            console.log('URL de búsqueda:', url);
+            console.log('URL de búsqueda preparada (TMDB, clave oculta)');
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`Error en la búsqueda de TMDB: ${response.status}`);
@@ -183,10 +205,4 @@ class APIClient {
     }
 }
 
-// Exportar una instancia única del cliente
 export const apiClient = new APIClient();
-
-// Exportar la función getRandomContent para uso externo
-export async function getRandomContent(type, platforms = [], genreId = '') {
-    return apiClient.getRandomContent(type, platforms, genreId);
-}
