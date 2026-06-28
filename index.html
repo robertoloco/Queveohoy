@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Qué veo hoy?</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2U1MDkxNCIgZD0iTTIwIDJINGMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxNmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0tOSAxM1Y5bDUgM2wtNSAzeiIvPjwvc3ZnPg==">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/platforms.css">
+</head>
+<body>
+    <div class="hero">
+        <h1><span class="accent">¿Qué veo</span> hoy?</h1>
+        <p>Descubre películas y series según tus plataformas</p>
+        <p class="sub">Recomendaciones validadas contra TMDB y plataformas disponibles en España</p>
+    </div>
+
+    <div class="container">
+        <div id="error-message" class="error-message"></div>
+
+        <div class="filters">
+            <div class="filters-header">
+                <label>Filtros</label>
+                <div class="engine-selector">
+                    <label for="engineSelect">Motor de recomendación:</label>
+                    <select id="engineSelect">
+                        <option value="ollama">Local gratis (Ollama)</option>
+                        <option value="gemini">Gemini / Netlify fallback</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="platforms-section">
+                <div class="platform-grid">
+                    <label class="checkbox-icon">
+                        <input type="checkbox" value="Netflix">
+                        <div class="platform-logo logo-netflix"></div>
+                        <span>Netflix</span>
+                    </label>
+                    <label class="checkbox-icon">
+                        <input type="checkbox" value="Max">
+                        <div class="platform-logo logo-max"></div>
+                        <span>Max</span>
+                    </label>
+                    <label class="checkbox-icon">
+                        <input type="checkbox" value="Disney Plus">
+                        <div class="platform-logo logo-disney"></div>
+                        <span>Disney+</span>
+                    </label>
+                    <label class="checkbox-icon">
+                        <input type="checkbox" value="Amazon Prime Video">
+                        <div class="platform-logo logo-prime"></div>
+                        <span>Prime</span>
+                    </label>
+                    <label class="checkbox-icon">
+                        <input type="checkbox" value="Apple TV Plus">
+                        <div class="platform-logo logo-apple"></div>
+                        <span>Apple TV+</span>
+                    </label>
+                    <label class="checkbox-icon">
+                        <input type="checkbox" value="Filmin">
+                        <div class="platform-logo logo-filmin"></div>
+                        <span>Filmin</span>
+                    </label>
+                    <label class="checkbox-icon">
+                        <input type="checkbox" value="Movistar Plus">
+                        <div class="platform-logo logo-movistar"></div>
+                        <span>Movistar+</span>
+                    </label>
+                    <label class="checkbox-icon">
+                        <input type="checkbox" value="Crunchyroll">
+                        <div class="platform-logo logo-crunchyroll"></div>
+                        <span>Crunchyroll</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="content-filters">
+                <div class="content-type">
+                    <select id="contentType">
+                        <option value="movie">Películas</option>
+                        <option value="tv">Series</option>
+                    </select>
+                    <select id="genre">
+                        <option value="">Todos los géneros</option>
+                    </select>
+                    <input type="number" id="yearMin" class="filter-input" placeholder="Año mín. (ej: 2000)" min="1900" max="2030">
+                    <select id="ratingMin" class="filter-select">
+                        <option value="">Rating mín.</option>
+                        <option value="5">≥ 5</option>
+                        <option value="6">≥ 6</option>
+                        <option value="7">≥ 7</option>
+                        <option value="8">≥ 8</option>
+                    </select>
+                </div>
+
+                <div class="actions">
+                    <button id="sorprendeme" class="action-button action-button-secondary">¡Sorpréndeme!</button>
+                    <div class="reference-search">
+                        <input type="text" id="referenceInput" placeholder="Dime una película o serie que te guste...">
+                        <button id="searchReference" class="action-button">Recomiéndame</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="engineStatus"></div>
+        <div id="candidatesCount"></div>
+
+        <div id="loadingMessage" class="loading-message" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Buscando recomendación...</p>
+        </div>
+
+        <div id="recommendations-container">
+            <div id="recommendations" style="display: none;"></div>
+            <div id="resultado"></div>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <p>Recomendaciones vía TMDB · Plataformas disponibles en España · <a href="https://developer.themoviedb.org" target="_blank" rel="noopener">TMDB API</a></p>
+    </footer>
+
+    <script src="js/env.js?v=20260628c"></script>
+    <script type="module" src="js/main.js?v=20260628c"></script>
+</body>
+</html>

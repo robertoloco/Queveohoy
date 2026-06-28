@@ -1,0 +1,103 @@
+.platform-logo {
+    width: 56px;
+    height: 56px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: block;
+    margin: 0 auto 0.5rem;
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+}
+
+.platform-logo:hover {
+    transform: scale(1.1);
+}
+
+#plataformas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.checkbox-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 1rem 0.75rem;
+    border-radius: 12px;
+    background: rgba(26, 26, 26, 0.5);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.checkbox-icon:hover {
+    background: rgba(229, 9, 20, 0.1);
+    border-color: rgba(229, 9, 20, 0.3);
+    transform: translateY(-2px);
+}
+
+.checkbox-icon.selected {
+    background: rgba(229, 9, 20, 0.15);
+    border-color: #e50914;
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.2);
+}
+
+.checkbox-icon input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-icon span {
+    color: #ccc;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Logos de plataformas (locales) */
+.logo-netflix {
+    background-image: url('../img/logos/netflix.svg');
+}
+
+.logo-max {
+    background-image: url('../img/logos/max.svg');
+}
+
+.logo-disneyplus,
+.logo-disney {
+    background-image: url('../img/logos/disney.svg');
+}
+
+.logo-amazonprimevideo,
+.logo-prime {
+    background-image: url('../img/logos/prime.svg');
+}
+
+.logo-appletvplus,
+.logo-apple {
+    background-image: url('../img/logos/apple.svg');
+}
+
+
+
+.logo-filmin {
+    background-image: url('../img/logos/filmin.svg');
+}
+
+.logo-movistarplus,
+.logo-movistar {
+    background-image: url('../img/logos/movistar.svg');
+}
+
+.logo-crunchyroll {
+    background-image: url('../img/logos/crunchyroll.svg');
+}
